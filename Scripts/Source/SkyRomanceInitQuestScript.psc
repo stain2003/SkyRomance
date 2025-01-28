@@ -81,7 +81,7 @@ EndEvent
 Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
 	;_args: EditorID
 	;_argc: FormID
-	
+
 Endevent
 
 Event OnQuestFailedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
@@ -186,11 +186,11 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 			Actor CurNPC = GetNPCByEditorID(CurString)
 			If (CurNPC)
 				If (SVOffset > 0)
-					ORomance.setlikestat(CurNPC, ORomance.getlikeStat(CurNPC) + SVOffset)
+					ORomance.increaselikestat(CurNPC, SVOffset)
 					;Output string used for debugging
 					outputstring = outputstring + CurNPC.GetName() + ": " + SVOffset + "\n"
 				Else
-					ORomance.setdislikestat(CurNPC, ORomance.getdislikeStat(CurNPC) + SVOffset)
+					ORomance.increasedislikestat(CurNPC, SVOffset * -1)
 				EndIf
 			EndIf
 		else;Update SVOffset
