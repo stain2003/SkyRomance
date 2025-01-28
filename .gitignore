@@ -1,9 +1,12 @@
-# Dependencies
-.psci_modules
-.spago
-bower_components
-node_modules
+# # Dependencies
+# .psci_modules
+# .spago
+# bower_components
+# node_modules
 
-# Generated files
-.psci
-output
+# # Generated files
+# .psci
+# output
+
+.ppj
+.code-workspace
