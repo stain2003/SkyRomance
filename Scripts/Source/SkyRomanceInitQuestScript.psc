@@ -109,6 +109,7 @@ Event OnKeyDown(int KeyPress)
 			;QuestList = JValue.readFromFile("Data/QuestFilter.Json")
 			;Debug.MessageBox(GetQuestFilter(JMap.getStr(QuestList, "DB01Misc"), 2))
 			;Debug.MessageBox("RecentActiveQuest:/n" + RecentQuest.GetID())
+			Debug.MessageBox(TestingPrint())
 		EndIf
 	EndIf
 
@@ -183,16 +184,18 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 		String FirstChar = substring(CurString, 0, 1)
 
 		If (FirstChar != "+" && FirstChar != "-");Get current NPC's editorID
-			Actor CurNPC = GetNPCByEditorID(CurString)
+			Actor CurNPC = GetNPCByEditorID() as Actor
 			If (CurNPC)
 				If (SVOffset > 0)
-					ORomance.increaselikestat(CurNPC, SVOffset)
+					;ORomance.increaselikestat(CurNPC, SVOffset)
 					;Output string used for debugging
 					outputstring = outputstring + CurNPC.GetName() + ": " + SVOffset + "\n"
 				Else
-					ORomance.increasedislikestat(CurNPC, SVOffset * -1)
+					;ORomance.increasedislikestat(CurNPC, SVOffset * -1)
 				EndIf
-			EndIf
+			else
+				Debug.Notification("can't get Actor pointer for " + CurString)
+			endif
 		else;Update SVOffset
 			String Value = Substring(CurString, 1, GetLength(CurString) - 1)
 			SVOffset = Value as int
