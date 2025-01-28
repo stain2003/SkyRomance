@@ -204,7 +204,7 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 		iter += 1
 	EndWhile
 	debug.Trace(outputstring)
-	;debug.MessageBox(outputstring)
+	debug.MessageBox(outputstring)
 	;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
 EndFunction
 
