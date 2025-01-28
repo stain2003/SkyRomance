@@ -8,5 +8,6 @@
 # .psci
 # output
 
-.ppj
-.code-workspace
+*.ppj
+*.code-workspace
+*.ppj
