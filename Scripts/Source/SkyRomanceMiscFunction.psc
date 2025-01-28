@@ -44,4 +44,4 @@ String Function GetQuestFilter(String Filters, int Level) Global
     return Substring(Filters, BeginSymbolLoc, sLength - 1 - BeginSymbolLoc)
 EndFunction
 
-Actor Function GetNPCFormIDByEditorID(string EditorID) Global native
+Actor Function GetNPCByEditorID(string EditorID) Global native

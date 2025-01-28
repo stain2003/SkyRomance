@@ -27,19 +27,12 @@ Event OnOptionKeyMapChange(int a_option, int a_keyCode, string conflictControl, 
 	bool continue = true
 	if a_option == MCM_DebugKeyA
 		If(conflictControl != "")
-			String mssg
-			If(conflictName != "")
-				mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n(" + conflictName + ")\n\nAre you sure you want to continue?"
-			Else
-				mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n\nAre you sure you want to continue?"
-			EndIf
-
-			continue = ShowMessage(mssg, true, "$Yes", "$No")
+			WarningWhenKeyMapConfict(conflictName, conflictControl)
 		EndIf
 
 		If(continue)
 			SetKeyMapOptionValue(MCM_DebugKeyA, a_keyCode, false)
-			; ((self as quest) as SkyRomanceInitQuestScript).SetDebugKey(a_keyCode)
+			;Update hotkey on main script side 
 			((self as quest) as SkyRomanceInitQuestScript).SR_RegisterForKey(((self as quest) as SkyRomanceInitQuestScript).DebugKeyA, a_keyCode)
 			((self as quest) as SkyRomanceInitQuestScript).DebugKeyA = a_keyCode
 		endif
@@ -47,14 +40,7 @@ Event OnOptionKeyMapChange(int a_option, int a_keyCode, string conflictControl, 
 
 	if a_option == MCM_DebugKeyB
 		If(conflictControl != "")
-			String mssg
-			If(conflictName != "")
-				mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n(" + conflictName + ")\n\nAre you sure you want to continue?"
-			Else
-				mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n\nAre you sure you want to continue?"
-			EndIf
-
-			continue = ShowMessage(mssg, true, "$Yes", "$No")
+			continue = WarningWhenKeyMapConfict(conflictName, conflictControl)
 		EndIf
 
 		If(continue)
@@ -83,3 +69,14 @@ event OnOptionSliderAccept(int a_option, float a_value)
 		SetSliderOptionValue(a_option, a_value)	;Update slider value on current page
 	endif
 EndEvent
+
+bool Function WarningWhenKeyMapConfict(string conflictName, string conflictControl)
+	String mssg
+	If(conflictName != "")
+		mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n(" + conflictName + ")\n\nAre you sure you want to continue?"
+	Else
+		mssg = "This key is already mapped to:\n\"" + conflictControl + "\"\n\nAre you sure you want to continue?"
+	EndIf
+
+	return ShowMessage(mssg, true, "$Yes", "$No")
+EndFunction

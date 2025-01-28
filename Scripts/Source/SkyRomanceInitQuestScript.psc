@@ -11,9 +11,6 @@ int Property DebugKeyB = 34 Auto
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
 
-;Data section
-string[] QuestLog
-
 ;Quest listener
 Quest RecentQuest
 int RecentFailedQuest
@@ -30,11 +27,6 @@ Event Oninit()
 	SR_InitKeys()
 
 	;More init logic
-		;just for testing
-	QuestLog = new String[3]
-	QuestLog[0] = "MS13"
-	QuestLog[1] = "MS13FIN"
-	QuestLog[2] = "FreeformRiverwood01"
 
 EndEvent
 
@@ -43,7 +35,7 @@ event OnLoadGameGlobal()
 	SR_InitEvents()
 	SR_InitKeys()
 	DbFormTimer.CancelTimer(self, 0)
-	DbFormTimer.StartTimer(self, UpdateInterval, 0)
+	;DbFormTimer.StartTimer(self, UpdateInterval, 0)
 
 	Debug.Notification("Game loaded")
 EndEvent
@@ -89,13 +81,7 @@ EndEvent
 Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
 	;_args: EditorID
 	;_argc: FormID
-	;Debug.MessageBox("Mod Event:\n" + _args + ": is Completed")
-	;TODO: adding consequence when player completed quests, I.E increased player's prestige to different factions
-	; int ArrayCopy = JValue.readFromFile(QuestLogPath)
-	; JArray.addStr(ArrayCopy, "TestString")
-	; JValue.writeToFile(ArrayCopy, QuestLogPath)
-	Debug.MessageBox("Quest completed: \n" + _args)
-	QuestLog = PushString(QuestLog, _args)
+	
 Endevent
 
 Event OnQuestFailedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
@@ -123,47 +109,12 @@ Event OnKeyDown(int KeyPress)
 			;QuestList = JValue.readFromFile("Data/QuestFilter.Json")
 			;Debug.MessageBox(GetQuestFilter(JMap.getStr(QuestList, "DB01Misc"), 2))
 			;Debug.MessageBox("RecentActiveQuest:/n" + RecentQuest.GetID())
-			string completedquest
-			int questnum = QuestLog.Length
-			int counter
-			while counter < questnum
-				completedquest = completedquest + QuestLog[counter] + "\n"
-				counter += 1
-			EndWhile
-			Debug.MessageBox(completedquest)
 		EndIf
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string[] DebugString = Split("+1|Adariana|Ysolda|-1|Nazzem|+2|Uthgerd|", "|")
-		int count = DebugString.Length
-		int iter = 0
-		string outputstring
-		int SVOffset
-		while iter < count
-			;Get current string info
-			String CurString = DebugString[iter]
-			String FirstChar = substring(CurString, 0, 1)
-
-			If (FirstChar != "+" && FirstChar != "-")
-				;Print NPC's ID
-				outputstring = outputstring + DebugString[iter] + ": " + SVOffset + "\n"
-				;TODO
-				;Update this NPC's SV, using api from ORomance
-			else
-				;Update SVOffset
-				String Value = Substring(CurString, 1, GetLength(CurString) - 1)
-				SVOffset = Value as int
-				;Negate value
-				If (FirstChar == "-")
-					SVOffset = -SVOffset
-				;TODO
-				EndIf
-			EndIf
-			iter += 1
-		EndWhile
-		debug.MessageBox(outputstring)
-		;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
+		string DebugString = "+1|Adariana|Ysolda|-1|Nazzem|+2|Uthgerd|"
+		UpdateNPCSVOnQuestCompleted(DebugString)
 	Endif
 EndEvent
 
@@ -221,31 +172,43 @@ Function SR_RegisterForKey(int oldkeyCode, int a_keyCode)
 	Debug.Trace("Register for new key" + a_keyCode)
 EndFunction
 
-; Function ProcessNPCString(String inputString)
-;     ; Split the input string into parts using "|" as a delimiter
-;     String[] parts = Split(inputString, "|")
-    
-;     int currentValue = 0  ; To hold the [+X] or [-X] values
+Function UpdateNPCSVOnQuestCompleted(String inputString)
+	string[] SplitedStrings = Split(inputString, "|")
+	int StrNum = SplitedStrings.Length
+	int iter = 0
+	string outputstring
+	int SVOffset
+	while iter < StrNum
+		String CurString = SplitedStrings[iter]
+		String FirstChar = substring(CurString, 0, 1)
 
-;     int i = 0             ; Index for the while loop
-;     int count = parts.Length
+		If (FirstChar != "+" && FirstChar != "-");Get current NPC's editorID
+			Actor CurNPC = GetNPCByEditorID(CurString)
+			If (CurNPC)
+				If (SVOffset > 0)
+					ORomance.setlikestat(CurNPC, ORomance.getlikeStat(CurNPC) + SVOffset)
+					;Output string used for debugging
+					outputstring = outputstring + CurNPC.GetName() + ": " + SVOffset + "\n"
+				Else
+					ORomance.setdislikestat(CurNPC, ORomance.getdislikeStat(CurNPC) + SVOffset)
+				EndIf
+			EndIf
+		else;Update SVOffset
+			String Value = Substring(CurString, 1, GetLength(CurString) - 1)
+			SVOffset = Value as int
+			;Negate value
+			If (FirstChar == "-")
+				SVOffset = -SVOffset
+			EndIf
+		EndIf
+		iter += 1
+	EndWhile
+	debug.Trace(outputstring)
+	;debug.MessageBox(outputstring)
+	;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
+EndFunction
 
-;     ; Loop through the parts of the string
-;     While i < count
-;         String part = parts[i].Trim()
 
-;         ; Check if the part is a value marker (e.g., [+1] or [-1])
-;         If part.StartsWith("[") && part.EndsWith("]")
-;             String valueString = part.Substring(1, part.Length - 2) ; Remove the brackets
-;             currentValue = valueString as Int  ; Convert the value to an integer
-;         ElseIf part != "" ; Skip empty strings
-;             ; Call the SetNPCSV function for the NPC with the current value
-;             SetNPCSV(currentValue, part)
-;         EndIf
-
-;         i += 1  ; Increment the index
-;     EndWhile
-; EndFunction
 
 ;---------End Register-----------------------------------------
 
