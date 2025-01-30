@@ -89,7 +89,7 @@ Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, 
 	int QuestMap = JValue.readFromFile("Data/SkyRomance/QuestMap.json")
 	String RelationShipChangelist = JMap.getStr(QuestMap, _args)
 	If (RelationShipChangelist != "")
-		UpdateNPCSVOnQuestCompleted(RelationShipChangelist)
+		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
 	Else
 		Debug.MessageBox("Invalid change list! \nOr can't find target QuestID in QuestMap.json")
 	Endif
@@ -109,7 +109,7 @@ Event OnQuestObjectiveUpdatedEvent(String _eventName, String _args, Float _argc 
 		String Objective = _args + "/" + Index
 		String RelationShipChangelist = JMap.getStr(ObjectiveMap, Objective)
 		If (RelationShipChangelist != "")
-			UpdateNPCSVOnQuestCompleted(RelationShipChangelist)
+			UpdateAffinityOnQuestCompleted(RelationShipChangelist)
 		Else
 			Debug.Notification("Invalid change list! \nOr can't find objective in QuestMap.json:\n" + Objective)
 		Endif
@@ -123,31 +123,22 @@ EndEvent
 Event OnKeyDown(int KeyPress)
 
 	if KeyPress == DebugKeyA
-		Debug.Trace("Debug key pressed")
-
 		;Debug NPC's stat
 		actor Target = game.GetCurrentCrosshairRef() as actor
 		If (target)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target))
-		Else
-			;QuestList = JValue.readFromFile("Data/QuestFilter.Json")
-			;Debug.MessageBox(GetQuestFilter(JMap.getStr(QuestList, "DB01Misc"), 2))
-			;Debug.MessageBox("RecentActiveQuest:/n" + RecentQuest.GetID())
-			If (TestingPrint())
-				Debug.MessageBox("not null")
-			Else
-				Debug.MessageBox("null")
-			EndIf
-			
-		EndIf
+			Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
+		else
+			Debug.Notification("invalid target")
+		Endif
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+1|CrimeFactionWhiterun|Ysolda|-1|Nazeem|+2|Uthgerd|DLC1Serana|"
-		UpdateNPCSVOnQuestCompleted(DebugString)
+		string DebugString = "+30|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Uthgerd|DLC1Serana|"
+		UpdateAffinityOnQuestCompleted(DebugString)
+		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
 	Endif
 EndEvent
 
@@ -213,7 +204,7 @@ Function SR_RegisterForKey(int oldkeyCode, int a_keyCode)
 	Debug.Trace("Register for new key" + a_keyCode)
 EndFunction
 
-Function UpdateNPCSVOnQuestCompleted(String inputString)
+Function UpdateAffinityOnQuestCompleted(String inputString)
 	string[] SplitedStrings = Split(inputString, "|")
 	int StrNum = SplitedStrings.Length
 	int iter = 0
@@ -234,14 +225,13 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 					ORomance.increasedislikestat(CurNPC, SVOffset * -1)
 				EndIf
 				;Output string used for debugging
-				outputstring = outputstring + CurNPC.GetDisplayName() + ":\n" + "Current Like: " + ORomance.getlikeStat(CurNPC) + " | " + "Last Like: " +  LastLikeSV + "\n"
-				outputstring = outputstring +  "Current Dislike: " + ORomance.getdislikeStat(CurNPC) + " | " + "Last Dislike: " +  LastDislikeSV + "\n"
+				; outputstring = outputstring + CurNPC.GetDisplayName() + ":\n" + "Current Like: " + ORomance.getlikeStat(CurNPC) + " | " + "Last Like: " +  LastLikeSV + "\n"
+				; outputstring = outputstring +  "Current Dislike: " + ORomance.getdislikeStat(CurNPC) + " | " + "Last Dislike: " +  LastDislikeSV + "\n"
 			else
 				Faction CurFaction = GetFormByEditorID(CurString) as Faction
 				If (CurFaction) ;look for faction entry
-					;Debug.MessageBox("Found faction entry: " + CurFaction.GetName())
-					UpdateFactionSV(CurFaction, SVOffset as int)
-					outputstring = outputstring + CurFaction.GetName() + ": " + SVOffset + "\n"
+					IncreaseFactionFame(CurFaction, SVOffset as int)
+					; outputstring = outputstring + CurFaction.GetName() + ": " + SVOffset + "\n"
 				else
 					Debug.Notification("Invalid entry " + CurString)
 				endif
@@ -260,12 +250,18 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 	;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
 EndFunction
 
-Function UpdateFactionSV(Faction inFaction, int FameToIncrease)
-	If (inFaction == ORomance.CrimeFactionWhiterun)
-		;Debug.MessageBox("WhiterunFaction Fame Increased by " + FameToIncrease + " !")
-		ORomance.TFWhiterun.SetValueInt(ORomance.TFWhiterun.GetValueInt() + FameToIncrease)
-		((self as quest) as ORomanceScript).TFWhiterun.SetValueInt(50)
-	EndIf
+;-----------Set and get value from StorageUtil--------------------
+string Property FactionFameKey = "SRK_FactionFame" Auto
+
+int Function GetFactionFame(Faction inFaction)
+	return StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
+EndFunction
+
+Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
+	int CurFame = GetFactionFame(inFaction)
+	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, CurFame + FameToIncrease)
+
+	Debug.notification("Fame of " + inFaction.GetName() + " increased by " + FameToIncrease)
 EndFunction
 
 ;---------End Register-----------------------------------------

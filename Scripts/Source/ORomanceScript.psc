@@ -94,28 +94,6 @@ GlobalVariable property ORLeft auto
 GlobalVariable property ORRight auto
 GlobalVariable property ORAlwaysAllowNakadashi auto 
 
-
-;Faction Fame
-;Town
-GlobalVariable Property TFDawnStar Auto
-GlobalVariable Property TFFalkreath Auto
-GlobalVariable Property TFMarkarth Auto
-GlobalVariable Property TFRiften Auto
-GlobalVariable Property TFSolitude Auto
-GlobalVariable Property TFWhiterun Auto
-GlobalVariable Property TFWindhelm Auto
-GlobalVariable Property TFWinterhold Auto
-;Joinable
-GlobalVariable Property JFCompanions Auto
-GlobalVariable Property JFMageCollege Auto
-GlobalVariable Property JFTGuild Auto
-GlobalVariable Property JFDBrotherhood Auto
-GlobalVariable Property JFImperial Auto
-GlobalVariable Property JFStormcloak Auto
-GlobalVariable Property JFBardsCollege Auto
-GlobalVariable Property JFDawnguard Auto
-GlobalVariable Property JFVolkihar Auto
-
 int Function GetDifficultyDiff()
 	return ORDifficulty.GetValueInt() as int
 endfunction
@@ -472,6 +450,8 @@ int function GetNPCSV(actor npc)
 		endif 
 	endif 
 
+	int FactionAffinity = GetAffinityForNPCFaction(npc)
+	npcsv += FactionAffinity
 
 	return npcSV
 
@@ -977,9 +957,6 @@ Event onKeyDown(int keyn)
 				Displaystats(target)
 				;console("Player SV: " + GetPlayerSV())
 			endif 
-		else
-			; TFWhiterun.setvalueint(TFWhiterun.GetValueint() + 1)
-			; Debug.MessageBox(TFWhiterun.getvalueint())
 		endif 
 	elseif keyn == 184
 		test()
@@ -2138,5 +2115,21 @@ function console(string in)
 	OsexIntegrationMain.Console(in)
 EndFunction
 
+;------------------------------Skyromance---------------------
+string Property FactionFameKey = "SRK_FactionFame" Auto
 
-;-------------Skyromance Section-------------------
+int Function GetAffinityForNPCFaction(actor NPC)
+	debug.Trace("Getting faction affinity for " + NPC.getdisplayName())
+	Faction[] FactionList = NPC.GetFactions(0, 127)
+	int len = FactionList.Length
+	int i = 0
+	int TotalAffinity = 0
+	while i < len
+		If (FactionList[i])
+			TotalAffinity += StorageUtil.GetIntValue(FactionList[i], FactionFameKey)
+		EndIf
+		i += 1
+	EndWhile
+	return TotalAffinity
+
+EndFunction
