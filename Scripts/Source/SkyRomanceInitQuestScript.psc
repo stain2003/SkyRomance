@@ -4,17 +4,24 @@ import SkyRomanceMiscFunction
 import PapyrusUtil
 import StringUtil
 
+;Script Linker
 ORomanceScript ORomance
+
+;MCM property
 int Property DebugKeyA = 35 Auto
 int Property DebugKeyB = 34 Auto
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
 
-;Quest listener
+;Quest Function Related
 Quest RecentQuest
 int RecentFailedQuest
 int RecentCompletedQuest
+string property ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json" auto
+string property QuestMapPath = "Data/SkyRomance/QuestMap.json" auto
+
+
 
 Event Oninit()
 	Debug.Notification("SkyRomance is initializing")
@@ -40,19 +47,12 @@ event OnLoadGameGlobal()
 	Debug.Notification("Game loaded")
 EndEvent
 
-Event OnDeathGlobal(Actor Victim, Actor Killer)
-	Debug.MessageBox("Attacker = " + Killer.getDisplayName() + "\nTarget = " + Victim.GetDisplayName())
-EndEvent
-
+;------------------------------------------------On Objective Update Deleagtor-----------------------------------------------
 Event OnQuestObjectiveStateChangedGlobal(Quest akQuest, string displayText, int oldState, int newState, int objectiveIndex, alias[] ojbectiveAliases)
-	;Dormant = 0,
-	;Displayed = 1,
-	;Completed = 2,
-	;CompletedDisplayed = 3,
-	;Failed = 4,
-	;FailedDisplayed = 5
-	RecentQuest = akQuest
+	;Dormant = 0;Displayed = 1;Completed = 2;CompletedDisplayed = 3;Failed = 4;FailedDisplayed = 5
+	debug.trace("Quest objective changed: " + objectiveIndex + "/" + displayText + "\n" + "newState: " + newState + " | oldState: " + oldState)
 
+	RecentQuest = akQuest
 	If RecentQuest.IsStopped()	;Send quest completed/failed event
 		int QuestID = akQuest.GetFormID()
 		If newstate == 2 || newstate == 3
@@ -69,30 +69,57 @@ Event OnQuestObjectiveStateChangedGlobal(Quest akQuest, string displayText, int 
 				RecentFailedQuest = QuestID
 			EndIf
 		endif
-	else	;Send objective update event
-		If (newState == 2 || newstate == 3)
-			SendModEvent("SRQuestObjectiveUpdated", displayText, objectiveIndex)
-		EndIf
+	else
+		;Deprecated
+	EndIf
+	;Send objective completed event
+	If (newState == 3 && oldState != 3)
+		SendModEvent("SRQuestObjectiveUpdated", akQuest.GetID(), objectiveIndex)
 	EndIf
 	
 	;debug.trace(akQuest.GetID() + displayText + " [" + objectiveIndex + "] " + " completed")
 EndEvent
 
+
+;---------------------------------------------On Quest Update Event----------------------------------------------------------
 Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
 	;_args: EditorID
 	;_argc: FormID
-
+	Debug.Notification("Mod Event:\n" + _args + ": is completed")
+	int QuestMap = JValue.readFromFile("Data/SkyRomance/QuestMap.json")
+	String RelationShipChangelist = JMap.getStr(QuestMap, _args)
+	If (RelationShipChangelist != "")
+		UpdateNPCSVOnQuestCompleted(RelationShipChangelist)
+	Else
+		Debug.MessageBox("Invalid change list! \nOr can't find target QuestID in QuestMap.json")
+	Endif
 Endevent
 
 Event OnQuestFailedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
-	Debug.MessageBox("Mod Event:\n" + _args + ": is failed")
+	Debug.Notification("Mod Event:\n" + _args + ": is failed")
 	;TODO: same as QuestCompletedEvent
 EndEvent
 
 Event OnQuestObjectiveUpdatedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
-	debug.trace(RecentQuest.GetID() + _args + " [" + _argc as int + "] " + " completed")
+	Debug.trace("Objective completed: " + _args + "/" + _argc as int)
+
+	int Index = _argc as int
+	int ObjectiveMap = JValue.readFromFile("Data/SkyRomance/ObjectiveMap.json")
+	If (ObjectiveMap != 0)
+		String Objective = _args + "/" + Index
+		String RelationShipChangelist = JMap.getStr(ObjectiveMap, Objective)
+		If (RelationShipChangelist != "")
+			UpdateNPCSVOnQuestCompleted(RelationShipChangelist)
+		Else
+			Debug.Notification("Invalid change list! \nOr can't find objective in QuestMap.json:\n" + Objective)
+		Endif
+	else
+		Debug.Notification("Can't find: " + "Data/SkyRomance/ObjectiveMap.json")
+	EndIF
 EndEvent
 
+
+;-----------------------------------------------Key Pressed Event------------------------------------------------------------
 Event OnKeyDown(int KeyPress)
 
 	if KeyPress == DebugKeyA
@@ -109,16 +136,26 @@ Event OnKeyDown(int KeyPress)
 			;QuestList = JValue.readFromFile("Data/QuestFilter.Json")
 			;Debug.MessageBox(GetQuestFilter(JMap.getStr(QuestList, "DB01Misc"), 2))
 			;Debug.MessageBox("RecentActiveQuest:/n" + RecentQuest.GetID())
-			Debug.MessageBox(TestingPrint())
+			If (TestingPrint())
+				Debug.MessageBox("not null")
+			Else
+				Debug.MessageBox("null")
+			EndIf
+			
 		EndIf
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+1|Adariana|Ysolda|-1|Nazzem|+2|Uthgerd|"
+		string DebugString = "+1|CrimeFactionWhiterun|Ysolda|-1|Nazeem|+2|Uthgerd|DLC1Serana|"
 		UpdateNPCSVOnQuestCompleted(DebugString)
 	Endif
 EndEvent
 
+
+
+
+
+;---------------------------------------------------------Timer Event------------------------------------------------------
 Event OnTimer(int aiTimerID)
 	if aiTimerID == 0
 		;Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())
@@ -127,7 +164,12 @@ Event OnTimer(int aiTimerID)
 	Endif
 EndEvent
 
-;
+
+
+
+
+
+
 ;--------------------------------------------------------Function------------------------------------------------------------------
 ;
 ;------------Begin Register---------------------------------------
@@ -139,12 +181,10 @@ EndFunction
 
 Function SR_RegisterEvent()
 	DbSkseEvents.RegisterFormForGlobalEvent("OnQuestObjectiveStateChangedGlobal", self)
-    DbSkseEvents.RegisterFormForGlobalEvent("OnDeathGlobal", self, game.getplayer(), 1)
 EndFunction
 
 Function SR_UnRegisterEvent()
 	DbSkseEvents.UnregisterFormForGlobalEvent_All("OnQuestObjectiveStateChangedGlobal", self)
-	DbSkseEvents.UnRegisterFormForGlobalEvent("OnDeathGlobal", self)
 EndFunction
 
 Function SR_RegisterModEvents()
@@ -177,29 +217,38 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 	string[] SplitedStrings = Split(inputString, "|")
 	int StrNum = SplitedStrings.Length
 	int iter = 0
-	string outputstring
-	int SVOffset
+	string outputstring = "Quest Objective Completed! NPC's SV has changed:\n"
+	float SVOffset
 	while iter < StrNum
 		String CurString = SplitedStrings[iter]
 		String FirstChar = substring(CurString, 0, 1)
 
-		If (FirstChar != "+" && FirstChar != "-");Get current NPC's editorID
-			Actor CurNPC = GetNPCByEditorID() as Actor
-			If (CurNPC)
+		If (FirstChar != "+" && FirstChar != "-") ;Check to see if current string is EditorID or int value
+			Actor CurNPC = GetFormByEditorID(CurString + "REF") as Actor
+			If (CurNPC) ;look for npcs entry
+				float LastLikeSV = ORomance.getlikeStat(CurNPC)
+				float LastDislikeSV = ORomance.getdislikeStat(CurNPC)
 				If (SVOffset > 0)
-					;ORomance.increaselikestat(CurNPC, SVOffset)
-					;Output string used for debugging
-					outputstring = outputstring + CurNPC.GetName() + ": " + SVOffset + "\n"
+					ORomance.increaselikestat(CurNPC, SVOffset)
 				Else
-					;ORomance.increasedislikestat(CurNPC, SVOffset * -1)
+					ORomance.increasedislikestat(CurNPC, SVOffset * -1)
 				EndIf
+				;Output string used for debugging
+				outputstring = outputstring + CurNPC.GetDisplayName() + ":\n" + "Current Like: " + ORomance.getlikeStat(CurNPC) + " | " + "Last Like: " +  LastLikeSV + "\n"
+				outputstring = outputstring +  "Current Dislike: " + ORomance.getdislikeStat(CurNPC) + " | " + "Last Dislike: " +  LastDislikeSV + "\n"
 			else
-				Debug.Notification("can't get Actor pointer for " + CurString)
+				Faction CurFaction = GetFormByEditorID(CurString) as Faction
+				If (CurFaction) ;look for faction entry
+					;Debug.MessageBox("Found faction entry: " + CurFaction.GetName())
+					UpdateFactionSV(CurFaction, SVOffset as int)
+					outputstring = outputstring + CurFaction.GetName() + ": " + SVOffset + "\n"
+				else
+					Debug.Notification("Invalid entry " + CurString)
+				endif
 			endif
 		else;Update SVOffset
 			String Value = Substring(CurString, 1, GetLength(CurString) - 1)
-			SVOffset = Value as int
-			;Negate value
+			SVOffset = Value as float
 			If (FirstChar == "-")
 				SVOffset = -SVOffset
 			EndIf
@@ -211,7 +260,13 @@ Function UpdateNPCSVOnQuestCompleted(String inputString)
 	;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
 EndFunction
 
-
+Function UpdateFactionSV(Faction inFaction, int FameToIncrease)
+	If (inFaction == ORomance.CrimeFactionWhiterun)
+		;Debug.MessageBox("WhiterunFaction Fame Increased by " + FameToIncrease + " !")
+		ORomance.TFWhiterun.SetValueInt(ORomance.TFWhiterun.GetValueInt() + FameToIncrease)
+		((self as quest) as ORomanceScript).TFWhiterun.SetValueInt(50)
+	EndIf
+EndFunction
 
 ;---------End Register-----------------------------------------
 

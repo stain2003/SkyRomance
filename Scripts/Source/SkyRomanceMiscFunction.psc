@@ -2,6 +2,7 @@ Scriptname SkyRomanceMiscFunction  Hidden
 
 import StringUtil
 
+;Deprecated, no longer used
 String Function GetQuestFilter(String Filters, int Level) Global
     String OutputString = ""
     int IterCount = 0
@@ -44,6 +45,6 @@ String Function GetQuestFilter(String Filters, int Level) Global
     return Substring(Filters, BeginSymbolLoc, sLength - 1 - BeginSymbolLoc)
 EndFunction
 
-Form Function GetNPCByEditorID() Global native
+Form Function GetFormByEditorID(string refEditorID) Global native
 
-String Function TestingPrint() Global native
+bool Function TestingPrint() Global native

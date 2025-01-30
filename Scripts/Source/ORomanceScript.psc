@@ -94,6 +94,28 @@ GlobalVariable property ORLeft auto
 GlobalVariable property ORRight auto
 GlobalVariable property ORAlwaysAllowNakadashi auto 
 
+
+;Faction Fame
+;Town
+GlobalVariable Property TFDawnStar Auto
+GlobalVariable Property TFFalkreath Auto
+GlobalVariable Property TFMarkarth Auto
+GlobalVariable Property TFRiften Auto
+GlobalVariable Property TFSolitude Auto
+GlobalVariable Property TFWhiterun Auto
+GlobalVariable Property TFWindhelm Auto
+GlobalVariable Property TFWinterhold Auto
+;Joinable
+GlobalVariable Property JFCompanions Auto
+GlobalVariable Property JFMageCollege Auto
+GlobalVariable Property JFTGuild Auto
+GlobalVariable Property JFDBrotherhood Auto
+GlobalVariable Property JFImperial Auto
+GlobalVariable Property JFStormcloak Auto
+GlobalVariable Property JFBardsCollege Auto
+GlobalVariable Property JFDawnguard Auto
+GlobalVariable Property JFVolkihar Auto
+
 int Function GetDifficultyDiff()
 	return ORDifficulty.GetValueInt() as int
 endfunction
@@ -955,6 +977,9 @@ Event onKeyDown(int keyn)
 				Displaystats(target)
 				;console("Player SV: " + GetPlayerSV())
 			endif 
+		else
+			; TFWhiterun.setvalueint(TFWhiterun.GetValueint() + 1)
+			; Debug.MessageBox(TFWhiterun.getvalueint())
 		endif 
 	elseif keyn == 184
 		test()
@@ -2112,3 +2137,6 @@ function console(string in)
 	endif 
 	OsexIntegrationMain.Console(in)
 EndFunction
+
+
+;-------------Skyromance Section-------------------
