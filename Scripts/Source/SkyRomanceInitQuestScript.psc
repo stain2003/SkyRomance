@@ -10,7 +10,7 @@ ORomanceScript ORomance
 ;MCM property
 int Property DebugKeyA = 35 Auto
 int Property DebugKeyB = 34 Auto
-bool Property DebugEnable = false Auto
+GlobalVariable Property DebugEnabled Auto
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
@@ -125,7 +125,9 @@ Event OnQuestObjectiveUpdatedEvent(String _eventName, String _args, Float _argc 
 	If (RelationShipChangelist != "")
 		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
 	Else
-		Debug.Notification("Invalid Quest objective EditorID! \nOr can't find objective in QuestMap.json:\n" + Objective)
+		If (isDebugEnable())
+			Debug.Notification("Invalid Quest objective EditorID! \nOr can't find objective in QuestMap.json:\n" + Objective)
+		EndIf
 	Endif
 EndEvent
 
@@ -161,8 +163,10 @@ EndEvent
 ;---------------------------------------------------------Timer Event------------------------------------------------------
 Event OnTimer(int aiTimerID)
 	if aiTimerID == 0
-		;Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())
-		Debug.Trace("Timer ticked" + ": ")
+		;Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())If (DebugEnable)
+		If (isDebugEnable())
+			Debug.Trace("Timer ticked" + ": ")
+		EndIf
 		DbFormTimer.StartTimer(self, UpdateInterval, 0)
 	Endif
 EndEvent
@@ -243,7 +247,7 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 			elseif (CurFaction)
 				;look for faction entry
 				IncreaseFactionFame(CurFaction, SVOffset as int)
-			Else
+			Elseif (isDebugEnable())
 				Debug.Notification("This editorID is not what we look for: " + CurString)
 				Debug.trace("This editorID is not what we look for: " + CurString)
 			endif
@@ -251,7 +255,7 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 		else
 			;Update SVOffset
 			SVOffset = Substring(CurString, 1, GetLength(CurString) - 1) as float
-			if (SVOffset == 0)
+			if (SVOffset == 0 && isDebugEnable())
 				Debug.Notification("Invalid editorID entry" + CurString)
 				Debug.trace("Invalid editorID entry" + CurString)
 			Endif
@@ -263,8 +267,10 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 		EndIf
 		iter += 1
 	EndWhile
-	debug.Trace(outputstring)
-	debug.messagebox(outputstring)
+	If (isDebugEnable())
+		debug.Trace(outputstring)
+		debug.messagebox(outputstring)
+	EndIf
 EndFunction
 
 ;-----------Set and get value from StorageUtil--------------------
@@ -275,7 +281,9 @@ Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
 	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
 	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, curVal + FameToIncrease)
 
-	Debug.notification("Fame of " + inFaction.GetName() + " increased by " + FameToIncrease)
+	If (isDebugEnable())
+		Debug.notification("Fame of " + inFaction.GetName() + " increased by " + FameToIncrease)
+	EndIf
 EndFunction
 
 Function IncreaseQuestFavor(Actor NPC, float invalue)
@@ -283,6 +291,10 @@ Function IncreaseQuestFavor(Actor NPC, float invalue)
 	float curVal = oromance.GetQuestFavorStat(NPC)
 	StorageUtil.SetFloatValue(NPC, QuestFavorKey, curVal + inValue)
 	oromance.increaselikestat(NPC, inValue)
+	
+	If (isDebugEnable())
+		Debug.notification(NPC.GetDisplayName() + "'s affinity increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
+	EndIf
 Endfunction
 
 ;---------End Register-----------------------------------------
@@ -296,4 +308,8 @@ EndFunction
 float Function GetUpdateInterval()
 	return UpdateInterval
 EndFunction
-;---------End MCM Setter & Caller----------------
+
+;---------Get Global Var-----------------------------------
+bool Function isDebugEnable()
+	return (DebugEnabled.GetValueInt() == 1)
+EndFunction

@@ -1,9 +1,12 @@
 Scriptname SkyRomanceMCM extends SKI_ConfigBase  
 
-int MCM_DebugKeyA = 0
-int MCM_DebugKeyB = 0
-bool MCM_DebugEnable = false
+string SkyRomance = "SkyRomance.esp"
+int MCM_DebugKeyA
+int MCM_DebugKeyB
+int MCM_DebugEnable
 float SR_EditUpdateInterval = 0.0
+
+int GVSRDebugEnabled = 0x00EFF8
 
 SkyRomanceInitQuestScript SkyromanceQuest
 
@@ -21,8 +24,15 @@ Event OnPageReset(string a_page)
     MCM_DebugKeyA = AddKeyMapOption("Debug Key A", ((self as quest) as SkyRomanceInitQuestScript).DebugKeyA, OPTION_FLAG_WITH_UNMAP)
     MCM_DebugKeyB = AddKeyMapOption("Debug Key B", ((self as quest) as SkyRomanceInitQuestScript).DebugKeyB, OPTION_FLAG_WITH_UNMAP)
     SR_EditUpdateInterval = AddSliderOption("Update Interval", ((self as quest) as SkyRomanceInitQuestScript).GetUpdateInterval())
-	MCM_DebugEnable = AddToggleOption("Enable Debug", ((self as quest) as SkyRomanceInitQuestScript).DebugEnable)
+	MCM_DebugEnable = AddToggleOption("Enable Debug", GetExternalBool(SkyRomance, GVSRDebugEnabled))
     ;AddEmptyOption()
+EndEvent
+
+Event OnOptionSelect(Int Option)
+	If (Option == MCM_DebugEnable)
+		SetExternalBool(SkyRomance, GVSRDebugEnabled, !GetExternalBool(SkyRomance, GVSRDebugEnabled))
+		SetToggleOptionValue(MCM_DebugEnable, GetExternalBool(SkyRomance, GVSRDebugEnabled))
+	EndIf
 EndEvent
 
 Event OnOptionKeyMapChange(int a_option, int a_keyCode, string conflictControl, string conflictName)
@@ -82,3 +92,19 @@ bool Function WarningWhenKeyMapConfict(string conflictName, string conflictContr
 
 	return ShowMessage(mssg, true, "$Yes", "$No")
 EndFunction
+
+;Setter
+Function SetExternalBool(string modesp, int id, bool val)
+	int set = 0
+	if val
+		set = 1
+	endif 
+
+	(game.GetFormFromFile(id, modesp) as GlobalVariable).SetValueInt(set)
+endfunction
+
+bool Function GetExternalBool(string modesp, int id)
+
+	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt() == 1
+
+endfunction
