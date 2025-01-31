@@ -2,6 +2,7 @@ Scriptname SkyRomanceMCM extends SKI_ConfigBase
 
 int MCM_DebugKeyA = 0
 int MCM_DebugKeyB = 0
+bool MCM_DebugEnable = false
 float SR_EditUpdateInterval = 0.0
 
 SkyRomanceInitQuestScript SkyromanceQuest
@@ -20,6 +21,7 @@ Event OnPageReset(string a_page)
     MCM_DebugKeyA = AddKeyMapOption("Debug Key A", ((self as quest) as SkyRomanceInitQuestScript).DebugKeyA, OPTION_FLAG_WITH_UNMAP)
     MCM_DebugKeyB = AddKeyMapOption("Debug Key B", ((self as quest) as SkyRomanceInitQuestScript).DebugKeyB, OPTION_FLAG_WITH_UNMAP)
     SR_EditUpdateInterval = AddSliderOption("Update Interval", ((self as quest) as SkyRomanceInitQuestScript).GetUpdateInterval())
+	MCM_DebugEnable = AddToggleOption("Enable Debug", ((self as quest) as SkyRomanceInitQuestScript).DebugEnable)
     ;AddEmptyOption()
 EndEvent
 

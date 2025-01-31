@@ -450,8 +450,7 @@ int function GetNPCSV(actor npc)
 		endif 
 	endif 
 
-	int FactionAffinity = GetAffinityForNPCFaction(npc)
-	npcsv += FactionAffinity
+	npcsv -= (GetAffinityForNPCFaction(npc) as int) * 5
 
 	return npcSV
 
@@ -2117,6 +2116,7 @@ EndFunction
 
 ;------------------------------Skyromance---------------------
 string Property FactionFameKey = "SRK_FactionFame" Auto
+string Property QuestFavorKey = "SRK_QuestFavor" Auto
 
 int Function GetAffinityForNPCFaction(actor NPC)
 	debug.Trace("Getting faction affinity for " + NPC.getdisplayName())
@@ -2131,5 +2131,8 @@ int Function GetAffinityForNPCFaction(actor NPC)
 		i += 1
 	EndWhile
 	return TotalAffinity
+EndFunction
 
+float Function GetQuestFavorStat(actor NPC)
+	return StorageUtil.GetFloatValue(NPC, QuestFavorKey)
 EndFunction

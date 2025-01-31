@@ -10,6 +10,7 @@ ORomanceScript ORomance
 ;MCM property
 int Property DebugKeyA = 35 Auto
 int Property DebugKeyB = 34 Auto
+bool Property DebugEnable = false Auto
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
@@ -85,13 +86,20 @@ EndEvent
 Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
 	;_args: EditorID
 	;_argc: FormID
+	;Map validation
 	Debug.Notification("Mod Event:\n" + _args + ": is completed")
 	int QuestMap = JValue.readFromFile("Data/SkyRomance/QuestMap.json")
+	if (QuestMap == 0)
+		debug.Notification("Invalid QuestMap.Json!!!")
+		return
+	Endif
+
+	;ReadString
 	String RelationShipChangelist = JMap.getStr(QuestMap, _args)
 	If (RelationShipChangelist != "")
 		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
 	Else
-		Debug.MessageBox("Invalid change list! \nOr can't find target QuestID in QuestMap.json")
+		Debug.Notification("Invalid Quest EditorID! \nOr can't find target QuestID in QuestMap.json")
 	Endif
 Endevent
 
@@ -101,21 +109,24 @@ Event OnQuestFailedEvent(String _eventName, String _args, Float _argc = 1.0, For
 EndEvent
 
 Event OnQuestObjectiveUpdatedEvent(String _eventName, String _args, Float _argc = 1.0, Form _sender)
-	Debug.trace("Objective completed: " + _args + "/" + _argc as int)
-
+	;_args: EditorID
+	;_argc: Completed objective
+	;Map validation
 	int Index = _argc as int
 	int ObjectiveMap = JValue.readFromFile("Data/SkyRomance/ObjectiveMap.json")
-	If (ObjectiveMap != 0)
-		String Objective = _args + "/" + Index
-		String RelationShipChangelist = JMap.getStr(ObjectiveMap, Objective)
-		If (RelationShipChangelist != "")
-			UpdateAffinityOnQuestCompleted(RelationShipChangelist)
-		Else
-			Debug.Notification("Invalid change list! \nOr can't find objective in QuestMap.json:\n" + Objective)
-		Endif
-	else
+	if (ObjectiveMap == 0)
 		Debug.Notification("Can't find: " + "Data/SkyRomance/ObjectiveMap.json")
-	EndIF
+		return
+	Endif
+
+	;Reading objective update string
+	String Objective = _args + "/" + Index
+	String RelationShipChangelist = JMap.getStr(ObjectiveMap, Objective)
+	If (RelationShipChangelist != "")
+		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
+	Else
+		Debug.Notification("Invalid Quest objective EditorID! \nOr can't find objective in QuestMap.json:\n" + Objective)
+	Endif
 EndEvent
 
 
@@ -129,14 +140,15 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
+			;Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
+			Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
 			Debug.Notification("invalid target")
 		Endif
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+30|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Uthgerd|DLC1Serana|"
+		string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
 		UpdateAffinityOnQuestCompleted(DebugString)
 		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
 	Endif
@@ -205,40 +217,46 @@ Function SR_RegisterForKey(int oldkeyCode, int a_keyCode)
 EndFunction
 
 Function UpdateAffinityOnQuestCompleted(String inputString)
+	;This function is used to update Npc's QuestFavor stat and FactionAffinity stat towards Player
 	string[] SplitedStrings = Split(inputString, "|")
 	int StrNum = SplitedStrings.Length
 	int iter = 0
-	string outputstring = "Quest Objective Completed! NPC's SV has changed:\n"
+	string outputstring = "Quest Objective Completed! NPC's SV has changed:"
 	float SVOffset
 	while iter < StrNum
 		String CurString = SplitedStrings[iter]
-		String FirstChar = substring(CurString, 0, 1)
+		Form curForm = GetFormByEditorID(CurString)
 
-		If (FirstChar != "+" && FirstChar != "-") ;Check to see if current string is EditorID or int value
+		If (curForm) ;Check to see if current string is EditorID or int value
 			Actor CurNPC = GetFormByEditorID(CurString + "REF") as Actor
-			If (CurNPC) ;look for npcs entry
-				float LastLikeSV = ORomance.getlikeStat(CurNPC)
-				float LastDislikeSV = ORomance.getdislikeStat(CurNPC)
-				If (SVOffset > 0)
-					ORomance.increaselikestat(CurNPC, SVOffset)
-				Else
-					ORomance.increasedislikestat(CurNPC, SVOffset * -1)
-				EndIf
-				;Output string used for debugging
-				; outputstring = outputstring + CurNPC.GetDisplayName() + ":\n" + "Current Like: " + ORomance.getlikeStat(CurNPC) + " | " + "Last Like: " +  LastLikeSV + "\n"
-				; outputstring = outputstring +  "Current Dislike: " + ORomance.getdislikeStat(CurNPC) + " | " + "Last Dislike: " +  LastDislikeSV + "\n"
-			else
-				Faction CurFaction = GetFormByEditorID(CurString) as Faction
-				If (CurFaction) ;look for faction entry
-					IncreaseFactionFame(CurFaction, SVOffset as int)
-					; outputstring = outputstring + CurFaction.GetName() + ": " + SVOffset + "\n"
-				else
-					Debug.Notification("Invalid entry " + CurString)
-				endif
+			Faction CurFaction = GetFormByEditorID(CurString) as Faction
+
+			If (CurNPC) 
+				;look for npcs entry
+				
+				IncreaseQuestFavor(CurNPC, SVOffset)
+				ORomance.increasedislikestat(CurNPC, SVOffset * -1)
+				; If (SVOffset > 0)
+				; Else
+				; EndIf
+
+			elseif (CurFaction)
+				;look for faction entry
+				IncreaseFactionFame(CurFaction, SVOffset as int)
+			Else
+				Debug.Notification("This editorID is not what we look for: " + CurString)
+				Debug.trace("This editorID is not what we look for: " + CurString)
 			endif
-		else;Update SVOffset
-			String Value = Substring(CurString, 1, GetLength(CurString) - 1)
-			SVOffset = Value as float
+			outputstring = outputstring + "\n" + CurString + ": " + SVOffset
+		else
+			;Update SVOffset
+			SVOffset = Substring(CurString, 1, GetLength(CurString) - 1) as float
+			if (SVOffset == 0)
+				Debug.Notification("Invalid editorID entry" + CurString)
+				Debug.trace("Invalid editorID entry" + CurString)
+			Endif
+			
+			String FirstChar = substring(CurString, 0, 1)
 			If (FirstChar == "-")
 				SVOffset = -SVOffset
 			EndIf
@@ -246,23 +264,26 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 		iter += 1
 	EndWhile
 	debug.Trace(outputstring)
-	debug.MessageBox(outputstring)
-	;QuestLog = PushString(QuestLog, "Teststringgejwiewew")
+	debug.messagebox(outputstring)
 EndFunction
 
 ;-----------Set and get value from StorageUtil--------------------
 string Property FactionFameKey = "SRK_FactionFame" Auto
-
-int Function GetFactionFame(Faction inFaction)
-	return StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
-EndFunction
+string Property QuestFavorKey = "SRK_QuestFavor" Auto
 
 Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
-	int CurFame = GetFactionFame(inFaction)
-	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, CurFame + FameToIncrease)
+	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
+	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, curVal + FameToIncrease)
 
 	Debug.notification("Fame of " + inFaction.GetName() + " increased by " + FameToIncrease)
 EndFunction
+
+Function IncreaseQuestFavor(Actor NPC, float invalue)
+	;This function will increase Npc's QuestFavor value for a permenant impact, also like stat for a tempory 'buff'.
+	float curVal = oromance.GetQuestFavorStat(NPC)
+	StorageUtil.SetFloatValue(NPC, QuestFavorKey, curVal + inValue)
+	oromance.increaselikestat(NPC, inValue)
+Endfunction
 
 ;---------End Register-----------------------------------------
 
