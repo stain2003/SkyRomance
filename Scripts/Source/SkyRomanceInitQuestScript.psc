@@ -22,6 +22,7 @@ int RecentCompletedQuest
 string property ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json" auto
 string property QuestMapPath = "Data/SkyRomance/QuestMap.json" auto
 string property GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json" auto
+string property NPCFavorGiftPath = "Data/SkyRomance/NPCFavorGift.json" auto
 
 
 Event Oninit()
@@ -142,7 +143,8 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			SKSEGetNPCInventory(Target)
+			SR_ProcessGift(Target)
+			;SKSEGetNPCInventory(Target)
 			;Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
 			;Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
@@ -154,8 +156,9 @@ Event OnKeyDown(int KeyPress)
 	If KeyPress == DebugKeyB
 		; string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
 		; UpdateAffinityOnQuestCompleted(DebugString)
-		TestingPrint()
+		;TestingPrint()
 		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
+		;SR_ProcessGift()
 	Endif
 EndEvent
 
@@ -276,6 +279,31 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 	EndIf
 EndFunction
 
+int Function SR_ProcessGift(Actor NPC)
+	int GiftLog = JValue.readFromFile(GivenGiftsLog)
+	int NPCFavorMap = JValue.readFromFile(NPCFavorGiftPath)
+	string[] GiftEditID = JMap.allKeysPArray(GiftLog)
+	string NPCFavorGiftList = JMap.getStr(NPCFavorMap, NPC as string)
+	Debug.MessageBox(NPC as string)
+	int Len = GiftEditID.Length
+	int i = 0
+	While (i < Len)
+		string GiftString = GiftEditID[i] + ": "
+		Form GiftForm = GetFormByEditorID(GiftEditID[i])
+		Keyword[] keyw = GiftForm.GetKeywords()
+
+		int KLen = keyw.Length
+		int j = 0
+		While (j < KLen)
+			GiftString = GiftString + keyw[j].GetString() + "; "
+			j += 1
+		EndWhile
+
+		Debug.Notification(GiftString)
+		i += 1
+	EndWhile
+EndFunction
+
 ;-----------Set and get value from StorageUtil--------------------
 string Property FactionFameKey = "SRK_FactionFame" Auto
 string Property QuestFavorKey = "SRK_QuestFavor" Auto
@@ -317,8 +345,22 @@ bool Function isDebugEnable()
 	return (DebugEnabled.GetValueInt() == 1)
 EndFunction
 
-Function WriteAddedItemsToJson()
-	int map = JMap.object()
-	JValue.writeToFile(map, GivenGiftsLog)
-	Debug.MessageBox("Writing map")
+Function WriteAddedItemsToJson(string[] itemkey, int[] count)
+	int ExistMap = JValue.readFromFile(GivenGiftsLog)
+	JValue.clear(ExistMap)
+	int fMap =  JMap.object()
+	
+	int len = itemkey.Length
+	int i = 0
+	string DebugString
+	while i < len
+		DebugString = DebugString + itemkey[i] + " x" + count[i] + "\n"
+		JMap.setInt(fMap, itemkey[i], count[i])
+		i += 1
+	Endwhile
+
+	JValue.writeToFile(fMap, GivenGiftsLog)
+	If (DebugEnabled)
+		Debug.MessageBox("Writing map:" + "\n" + DebugString)
+	EndIf
 EndFunction
