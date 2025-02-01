@@ -52,4 +52,3 @@ Function TestingPrint() Global native
 Function SKSEGetNPCInventory(Actor TargetNPC) Global native
 
 Function GetAddedItems(Actor TargetNPC) Global native
-

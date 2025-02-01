@@ -143,7 +143,8 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			SR_ProcessGift(Target)
+			;Debug.messagebox(target.GetDisplayName())
+			;SR_ProcessGift(Target)
 			;SKSEGetNPCInventory(Target)
 			;Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
 			;Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
@@ -280,26 +281,58 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 EndFunction
 
 int Function SR_ProcessGift(Actor NPC)
+	;Get map: 1. Given gifts 2. Npc favor gift type
 	int GiftLog = JValue.readFromFile(GivenGiftsLog)
-	int NPCFavorMap = JValue.readFromFile(NPCFavorGiftPath)
 	string[] GiftEditID = JMap.allKeysPArray(GiftLog)
-	string NPCFavorGiftList = JMap.getStr(NPCFavorMap, NPC as string)
-	Debug.MessageBox(NPC as string)
+
+	int NPCFavorMap = JValue.readFromFile(NPCFavorGiftPath)
+	string[] NPCFavorList = Split(JMap.getStr(NPCFavorMap, NPC as string), "|")
+
+	;Loop through all gifts, fore each type of gift, get npc's favors, and find if any of them in current 
 	int Len = GiftEditID.Length
 	int i = 0
 	While (i < Len)
-		string GiftString = GiftEditID[i] + ": "
-		Form GiftForm = GetFormByEditorID(GiftEditID[i])
-		Keyword[] keyw = GiftForm.GetKeywords()
+		;Current gift
+		string DisplayString = GiftEditID[i] + ": "
+		Form CurGiftForm = GetFormByEditorID(GiftEditID[i])
+		Keyword[] GiftKeywords = CurGiftForm.GetKeywords()
 
-		int KLen = keyw.Length
+		float FavorMult = 1
+
+		int FLen = NPCFavorList.Length
 		int j = 0
-		While (j < KLen)
-			GiftString = GiftString + keyw[j].GetString() + "; "
-			j += 1
-		EndWhile
+		While (j < FLen)
+			string CurString = NPCFavorList[j]
+			Form CurFavor =  GetFormByEditorID(CurString)
 
-		Debug.Notification(GiftString)
+			if(CurFavor) ;If this string is keyword: find this in gift and increase NPC's stat using FavorMult
+				int k = 0
+				while (k < GiftKeywords.Length)
+					if (GiftKeywords[k] == CurString)
+						;Do npc increase like logic
+						k = GiftKeywords.Length
+					Endif
+					k += 1
+				EndWhile
+
+			else; If this string is favor multipier: update FavorMult
+				FavorMult = Substring(CurString, 1, GetLength(CurString) - 1) as float
+				if(Substring(CurString, 0, 1) == "-")
+					FavorMult = -FavorMult
+				Endif
+			Endif
+			j += 1
+		Endwhile
+
+		; int KLen = GiftKeywords.Length
+		; int j = 0
+		; While (j < KLen)
+		; 	;Current keyword of this gift
+		; 	DisplayString = DisplayString + GiftKeywords[j].GetString() + "; "
+		; 	j += 1
+		; EndWhile
+
+		Debug.Notification(DisplayString)
 		i += 1
 	EndWhile
 EndFunction
@@ -358,8 +391,8 @@ Function WriteAddedItemsToJson(string[] itemkey, int[] count)
 		JMap.setInt(fMap, itemkey[i], count[i])
 		i += 1
 	Endwhile
-
 	JValue.writeToFile(fMap, GivenGiftsLog)
+
 	If (DebugEnabled)
 		Debug.MessageBox("Writing map:" + "\n" + DebugString)
 	EndIf
