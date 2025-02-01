@@ -21,7 +21,7 @@ int RecentFailedQuest
 int RecentCompletedQuest
 string property ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json" auto
 string property QuestMapPath = "Data/SkyRomance/QuestMap.json" auto
-
+string property GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json" auto
 
 
 Event Oninit()
@@ -142,16 +142,19 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
+			SKSEGetNPCInventory(Target)
 			;Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
-			Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
+			;Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
-			Debug.Notification("invalid target")
+			TestingPrint()
+			;Debug.Notification("invalid target")
 		Endif
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
-		UpdateAffinityOnQuestCompleted(DebugString)
+		; string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
+		; UpdateAffinityOnQuestCompleted(DebugString)
+		TestingPrint()
 		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
 	Endif
 EndEvent
@@ -309,7 +312,13 @@ float Function GetUpdateInterval()
 	return UpdateInterval
 EndFunction
 
-;---------Get Global Var-----------------------------------
+;---------Get/Set Global Var-----------------------------------
 bool Function isDebugEnable()
 	return (DebugEnabled.GetValueInt() == 1)
+EndFunction
+
+Function WriteAddedItemsToJson()
+	int map = JMap.object()
+	JValue.writeToFile(map, GivenGiftsLog)
+	Debug.MessageBox("Writing map")
 EndFunction

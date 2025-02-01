@@ -450,8 +450,8 @@ int function GetNPCSV(actor npc)
 		endif 
 	endif 
 
-	npcsv -= (GetAffinityForNPCFaction(npc) as int) * 5
-
+	npcsv -= (GetAffinityForNPCFaction(npc) as int)
+	npcSV -= (GetQuestFavorStat(npc) as int) * 2
 	return npcSV
 
 EndFunction

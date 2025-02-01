@@ -203,7 +203,7 @@ Event OstimOrgasm(string eventName, string strArg, float numArg, Form sender)
 
 	if npc == playerref 
 		npc = ostim.getsexpartner(playerref)
-		if ostim.IsVaginal() && !ostim.isfemale(playerref)
+		if ostim.IsVaginal() && !ostim.isfemale(playerref) && ostim.GetAggressiveActor() == playerref
 			main.seedifneeded(npc)
 			int monog = main.getMonogamyDesireStat(npc)
 

@@ -47,4 +47,9 @@ EndFunction
 
 Form Function GetFormByEditorID(string refEditorID) Global native
 
-bool Function TestingPrint() Global native
+Function TestingPrint() Global native
+
+Function SKSEGetNPCInventory(Actor TargetNPC) Global native
+
+Function GetAddedItems(Actor TargetNPC) Global native
+
