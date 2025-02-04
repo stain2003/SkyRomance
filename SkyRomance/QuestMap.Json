@@ -6,5 +6,10 @@
 	"MQ103": "+2|DragonsreachOccupants|+3|FarengarSecretFire|+2|BalgruuftheGreater",
 	"MQ104": "+5|CrimeFactionWhiterun|+3|DragonsreachOccupants|+3|Irileth|BalgruuftheGreater",
 	"MQ105": "+3|CrimeFactionGreybeard|+1|CrimeFactionWhiterun",
-	"MQ106"
+	"MQ105Ustengrav": "+3|CrimeFactionGreybeard|",
+	"MQ106": "+3|Delphine|+1|BladesFaction",
+	"MQ201": "+3|Delphine|+2|BladesFaction",
+	"MQ202": "+1|Delphine|+3|BladesFaction",
+	"MQ203": "+3|Delphine|+5|BladesFaction",
+	"MQ204": "+2|BladesFaction|+3|CrimeFactionGreybeard"
 }

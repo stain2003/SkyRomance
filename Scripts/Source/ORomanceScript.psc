@@ -2184,7 +2184,7 @@ Function SR_ProcessGift(Actor NPC, float TotalValue)
 
 	;Make a map for Npc's favor gift type/keyword
 	Debug.Trace("Now making a map to store " + NPC.GetDisplayName() + "'s favor keywords of gifts!")
-	int FavorKeywordMap = JMap.object()
+	int FavorGiftMap = JMap.object()
 	int j = 0
 	int jLen = NPCFavorList.Length
 	int FavorValue
@@ -2192,7 +2192,7 @@ Function SR_ProcessGift(Actor NPC, float TotalValue)
 		string CurString = NPCFavorList[j]
 		Debug.trace("Current string: " + CurString)
 		If (Substring(CurString, 0, 1) != "-" && Substring(CurString, 0, 1) != "+")
-			JMap.Setint(FavorKeywordMap, CurString, FavorValue)
+			JMap.Setint(FavorGiftMap, CurString, FavorValue)
 			debug.trace("Favor keyword added: " + CurString + ": " + FavorValue + " ! ")
 		Else
 			FavorValue = Substring(CurString, 1, GetLength(CurString) - 1) as int
@@ -2209,7 +2209,8 @@ Function SR_ProcessGift(Actor NPC, float TotalValue)
 	int Len = GiftEditID.Length
 	int i = 0
 	int GiftFavorToAdd
-	While (i < Len)
+	While (i < Len)	
+		;--------------------------------------Gifts loop---------------------------------------
 		;Current gift
 		Debug.Trace("Current gift: " + GiftEditID[i])
 		string CurGift = GiftEditID[i]
@@ -2218,22 +2219,24 @@ Function SR_ProcessGift(Actor NPC, float TotalValue)
 
 		int k = 0
 		int keywordLen = GiftKeywords.Length
-		While (k < keywordLen)
-			Debug.Trace("Searching for keyword in NPC's interest list: " + GiftKeywords[k].GetString())
-			;Current keyword
-			string CurKeyword = GiftKeywords[k].GetString()
-			if (JMap.hasKey(FavorKeywordMap, CurKeyword))
-				;If this keyword is in NPC's favor list
-				;Calculate favor multiplier
-				;float CurFavorMult = JMap.getFlt(FavorKeywordMap, CurKeyword) * Jmap.getInt(GivenGiftLog, CurGift) * GetExternalFloat("SkyRomance.esp", 0x00EFF9)/10 ;Favor mult * count * 0.05(default)
-				;FinalMult = FinalMult + CurFavorMult
-				int CurKeywordFavorValue = JMap.getInt(FavorKeywordMap, CurKeyword) * JMap.getInt(GivenGiftLog, CurGift)
-				GiftFavorToAdd += curkeywordfavorvalue
-				;Debug.Trace("Keyword: " + CurKeyword + " Found! " + "Favor multiplier increased by: " + CurFavorMult + " ! " + "\nFavor Multiplier: " + GetExternalFloat("SkyRomance.esp", 0x00EFF9)/10)
-				;k = keywordLen
-			Endif
-			k += 1
-		EndWhile
+		if (JMap.hasKey(FavorGiftMap, CurGift))
+			;if this gift is in NPC's favor list
+			int GiftFavor = JMap.getInt(FavorGiftMap, CurGift) * JMap.getInt(GivenGiftLog, CurGift)
+			GiftFavorToAdd += GiftFavor
+		Else
+			While (k < keywordLen)
+				;-------------------------------Keywords loop---------------------------------------
+				Debug.Trace("Searching for keyword in NPC's interest list: " + GiftKeywords[k].GetString())
+				;Current keyword
+				string CurKeyword = GiftKeywords[k].GetString()
+				if (JMap.hasKey(FavorGiftMap, CurKeyword))
+					;If this keyword is in NPC's favor list
+					int CurKeywordFavorValue = JMap.getInt(FavorGiftMap, CurKeyword) * JMap.getInt(GivenGiftLog, CurGift)
+					GiftFavorToAdd += curkeywordfavorvalue
+				Endif
+				k += 1
+			EndWhile
+		Endif
 		i += 1
 	EndWhile
 
