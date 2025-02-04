@@ -11,6 +11,9 @@ ORomanceScript ORomance
 int Property DebugKeyA = 35 Auto
 int Property DebugKeyB = 34 Auto
 GlobalVariable Property DebugEnabled Auto
+GlobalVariable Property GiftFavorMultiplier Auto
+GlobalVariable Property QuestFavorMultiplier Auto
+GlobalVariable Property FactionFavorMultiplier Auto
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
@@ -19,10 +22,10 @@ float UpdateInterval = 5.0
 Quest RecentQuest
 int RecentFailedQuest
 int RecentCompletedQuest
-string property ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json" auto
-string property QuestMapPath = "Data/SkyRomance/QuestMap.json" auto
-string property GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json" auto
-string property NPCFavorGiftPath = "Data/SkyRomance/NPCFavorGift.json" auto
+string ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json"
+string QuestMapPath = "Data/SkyRomance/QuestMap.json"
+string GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json"
+string NPCFavorGiftPath = "Data/SkyRomance/NPCFavorGift.json"
 
 
 Event Oninit()
@@ -45,8 +48,6 @@ event OnLoadGameGlobal()
 	SR_InitKeys()
 	DbFormTimer.CancelTimer(self, 0)
 	;DbFormTimer.StartTimer(self, UpdateInterval, 0)
-
-	Debug.Notification("Game loaded")
 EndEvent
 
 ;------------------------------------------------On Objective Update Deleagtor-----------------------------------------------
@@ -143,13 +144,10 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			;Debug.messagebox(target.GetDisplayName())
-			;SR_ProcessGift(Target)
-			;SKSEGetNPCInventory(Target)
-			;Debug.MessageBox(Target.GetDisplayName() + "'s SV: " + ORomance.GetNPCSV(Target) + "\nMarrySV: " + ORomance.GetMarrySV(Target) + "\nSeductionSV: " + ORomance.GetSeductionSV(Target) + "\nKissSV: " + ORomance.GetKissSV(Target) + "\nFaction Fame: " + ORomance.GetAffinityForNPCFaction(Target))
-			;Debug.messagebox("SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nLikeStat: " + oromance.getlikeStat(target))
+			SKSEGetNPCInventory(target)
+			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
-			TestingPrint()
+			;TestingPrint()
 			;Debug.Notification("invalid target")
 		Endif
 	EndIf
@@ -160,6 +158,7 @@ Event OnKeyDown(int KeyPress)
 		;TestingPrint()
 		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
 		;SR_ProcessGift()
+		debug.Notification("Player's SV: " + ORomance.GetPlayerSV())
 	Endif
 EndEvent
 
@@ -177,10 +176,6 @@ Event OnTimer(int aiTimerID)
 		DbFormTimer.StartTimer(self, UpdateInterval, 0)
 	Endif
 EndEvent
-
-
-
-
 
 
 
@@ -233,7 +228,7 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 	int StrNum = SplitedStrings.Length
 	int iter = 0
 	string outputstring = "Quest Objective Completed! NPC's SV has changed:"
-	float SVOffset
+	int FavorValue
 	while iter < StrNum
 		String CurString = SplitedStrings[iter]
 		Form curForm = GetFormByEditorID(CurString)
@@ -243,33 +238,29 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 			Faction CurFaction = GetFormByEditorID(CurString) as Faction
 
 			If (CurNPC) 
-				;look for npcs entry
-				
-				IncreaseQuestFavor(CurNPC, SVOffset)
-				ORomance.increasedislikestat(CurNPC, SVOffset * -1)
-				; If (SVOffset > 0)
-				; Else
-				; EndIf
+				;------------------------look for npcs entry----------------------------
+				IncreaseQuestFavor(CurNPC, FavorValue)
 
 			elseif (CurFaction)
-				;look for faction entry
-				IncreaseFactionFame(CurFaction, SVOffset as int)
+				;------------------------look for faction entry------------------------
+				IncreaseFactionFame(CurFaction,  FavorValue)
+
 			Elseif (isDebugEnable())
 				Debug.Notification("This editorID is not what we look for: " + CurString)
 				Debug.trace("This editorID is not what we look for: " + CurString)
 			endif
-			outputstring = outputstring + "\n" + CurString + ": " + SVOffset
+			outputstring = outputstring + "\n" + CurString + ": " + FavorValue
 		else
 			;Update SVOffset
-			SVOffset = Substring(CurString, 1, GetLength(CurString) - 1) as float
-			if (SVOffset == 0 && isDebugEnable())
+			FavorValue = Substring(CurString, 1, GetLength(CurString) - 1) as int
+			if (FavorValue == 0 && isDebugEnable())
 				Debug.Notification("Invalid editorID entry" + CurString)
 				Debug.trace("Invalid editorID entry" + CurString)
 			Endif
 			
 			String FirstChar = substring(CurString, 0, 1)
 			If (FirstChar == "-")
-				SVOffset = -SVOffset
+				FavorValue = -FavorValue
 			EndIf
 		EndIf
 		iter += 1
@@ -280,66 +271,10 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 	EndIf
 EndFunction
 
-int Function SR_ProcessGift(Actor NPC)
-	;Get map: 1. Given gifts 2. Npc favor gift type
-	int GiftLog = JValue.readFromFile(GivenGiftsLog)
-	string[] GiftEditID = JMap.allKeysPArray(GiftLog)
-
-	int NPCFavorMap = JValue.readFromFile(NPCFavorGiftPath)
-	string[] NPCFavorList = Split(JMap.getStr(NPCFavorMap, NPC as string), "|")
-
-	;Loop through all gifts, fore each type of gift, get npc's favors, and find if any of them in current 
-	int Len = GiftEditID.Length
-	int i = 0
-	While (i < Len)
-		;Current gift
-		string DisplayString = GiftEditID[i] + ": "
-		Form CurGiftForm = GetFormByEditorID(GiftEditID[i])
-		Keyword[] GiftKeywords = CurGiftForm.GetKeywords()
-
-		float FavorMult = 1
-
-		int FLen = NPCFavorList.Length
-		int j = 0
-		While (j < FLen)
-			string CurString = NPCFavorList[j]
-			Form CurFavor =  GetFormByEditorID(CurString)
-
-			if(CurFavor) ;If this string is keyword: find this in gift and increase NPC's stat using FavorMult
-				int k = 0
-				while (k < GiftKeywords.Length)
-					if (GiftKeywords[k] == CurString)
-						;Do npc increase like logic
-						k = GiftKeywords.Length
-					Endif
-					k += 1
-				EndWhile
-
-			else; If this string is favor multipier: update FavorMult
-				FavorMult = Substring(CurString, 1, GetLength(CurString) - 1) as float
-				if(Substring(CurString, 0, 1) == "-")
-					FavorMult = -FavorMult
-				Endif
-			Endif
-			j += 1
-		Endwhile
-
-		; int KLen = GiftKeywords.Length
-		; int j = 0
-		; While (j < KLen)
-		; 	;Current keyword of this gift
-		; 	DisplayString = DisplayString + GiftKeywords[j].GetString() + "; "
-		; 	j += 1
-		; EndWhile
-
-		Debug.Notification(DisplayString)
-		i += 1
-	EndWhile
-EndFunction
-
 ;-----------Set and get value from StorageUtil--------------------
 string Property FactionFameKey = "SRK_FactionFame" Auto
 string Property QuestFavorKey = "SRK_QuestFavor" Auto
+string Property GiftFavorKey = "SRK_GiftFavor" Auto
 
 Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
 	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
@@ -350,11 +285,12 @@ Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
 	EndIf
 EndFunction
 
-Function IncreaseQuestFavor(Actor NPC, float invalue)
+Function IncreaseQuestFavor(Actor NPC, int invalue)
 	;This function will increase Npc's QuestFavor value for a permenant impact, also like stat for a tempory 'buff'.
-	float curVal = oromance.GetQuestFavorStat(NPC)
-	StorageUtil.SetFloatValue(NPC, QuestFavorKey, curVal + inValue)
-	oromance.increaselikestat(NPC, inValue)
+	int curVal = oromance.GetQuestFavorStat(NPC)
+	StorageUtil.SetIntValue(NPC, QuestFavorKey, curVal + inValue)
+	;optional, leave like stat alone for now
+	;oromance.increaselikestat(NPC, inValue)
 	
 	If (isDebugEnable())
 		Debug.notification(NPC.GetDisplayName() + "'s affinity increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
@@ -394,6 +330,6 @@ Function WriteAddedItemsToJson(string[] itemkey, int[] count)
 	JValue.writeToFile(fMap, GivenGiftsLog)
 
 	If (DebugEnabled)
-		Debug.MessageBox("Writing map:" + "\n" + DebugString)
+		;ConsoleUtil.PrintMessage("Papyrus: Writing map:" + "\n" + DebugString)
 	EndIf
 EndFunction

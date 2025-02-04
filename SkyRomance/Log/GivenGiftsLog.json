@@ -1,4 +1,7 @@
 {
-  "ArmorIronBoots": 1,
-  "IronArrow": 23
+  "ArmorIronCuirass": 1,
+  "IronSword": 1,
+  "IronWarAxe": 1,
+  "Lockpick": 10,
+  "Longbow": 1
 }

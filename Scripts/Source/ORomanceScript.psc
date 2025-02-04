@@ -273,10 +273,11 @@ int function GetPlayerGold()
 endfunction	
 
 int function GetNPCSV(actor npc)
+	Debug.Trace("Getting SV for " + npc.GetDisplayName())
 	int npcSV = GetBaseValue(npc)
-
+	Debug.Trace("Base Value: " + npcSV)
 	npcsv += GetCustomValue(npc)
-
+	Debug.Trace("Custom Value added: " + npcSV)
 	int RelationshipRank = npc.GetRelationshipRank(playerref)
 
 	int prude = getPrudishnessStat(npc)
@@ -289,6 +290,7 @@ int function GetNPCSV(actor npc)
 			npcSV -= 5
 		endif 
 	endif 
+	debug.trace("Prude checked: " + npcSV)
 	int monog = getMonogamyDesireStat(npc) ;1- 100
 	if IsMarried(npc) 
 		if monog < 25
@@ -327,7 +329,7 @@ int function GetNPCSV(actor npc)
 			endif
 		endif
 	EndIf
-
+	Debug.Trace("Marriage checked: " + npcSV)
 	if relationshiprank == 1
 		npcSV -= 50
 	elseif relationshiprank == 2
@@ -339,7 +341,7 @@ int function GetNPCSV(actor npc)
 	elseif relationshiprank < 0
 		npcsv += 100
 	endif 
-
+	Debug.Trace("Relationship Rank checked: " + npcSV)
 		If (FavorJarlsMakeFriends.WhiterunImpGetOutofJail > 0 || FavorJarlsMakeFriends.WhiterunSonsGetOutofJail > 0)
 			if npc.IsInFaction(CrimeFactionWhiterun)
 				npcsv -= 20
@@ -386,10 +388,10 @@ int function GetNPCSV(actor npc)
 				npcsv -= 20
 			endif
 		EndIf
-
+		Debug.Trace("Jarl's friend checked: " + npcSV)
 		npcsv -= (getloveStat(npc) * 3) as int
 		npcsv += (gethateStat(npc) * 3) as int
-
+		Debug.Trace("Love and Hate checked: " + npcSV)
 		int dislike = getdislikeStat(npc) as Int
 
 		if (dislike >= 1) && (dislike <= 2)
@@ -397,7 +399,7 @@ int function GetNPCSV(actor npc)
 		else 
 			npcsv += (dislike  * 3)
 		endif 
-
+		Debug.Trace("Dislike checked: " + npcSV)
 		int sexuality = GetSexuality(npc)
 
 		bool femalePlayer = getGender(playerref)
@@ -441,7 +443,7 @@ int function GetNPCSV(actor npc)
 				endif 
 			endif 
 		endif 
-
+		Debug.Trace("Sexuality checked: " + npcSV)
 	if (npc.GetRace() == orcrace )
 		if isOrcFriend(playerref)
 			npcsv -= 25
@@ -450,8 +452,18 @@ int function GetNPCSV(actor npc)
 		endif 
 	endif 
 
-	npcsv -= (GetAffinityForNPCFaction(npc) as int)
-	npcSV -= (GetQuestFavorStat(npc) as int) * 2
+	int FactionAffity = (GetAffinityForNPCFaction(npc)) * GetExternalInt(SkyRomance, GVSRFactionAffinity)
+	int QuestFavor = (GetQuestFavorStat(npc)) * GetExternalInt(SkyRomance, GVSRQuestFavor)
+	int GiftFavor = (GetGiftFavorStat(npc)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
+	
+	Debug.Trace("+FactionAffinity: " + FactionAffity)
+	Debug.Trace("+QuestFavor: " + QuestFavor)
+	Debug.Trace("+GiftFavor: " + giftFavor)
+
+	npcsv -= FactionAffity + questfavor + giftfavor
+
+	Debug.Trace("Final SV: " + npcSV)
+
 	return npcSV
 
 EndFunction
@@ -2041,26 +2053,30 @@ bool function canGiveGift(actor npc)
 	endif
 EndFunction
 
-function ProcessGift(actor npc, int value, bool apology=false)
+function ProcessGift(actor npc, int value, bool apology=false) 
 	if value == 0
 		return 
 	endif 
 	debug.SendAnimationEvent(npc, "idletake")
 	StorageUtil.SetFloatValue(npc as form, "or_k_last_gift", Utility.GetCurrentGameTime())
+	SR_ProcessGift(npc, value)
+
 	if apology
-		int dislike = (value / 100) * -1
+		float dislike = (value / 100) * -1
+		float Lastdislike = getdislikeStat(npc)
 		increasedislikestat(npc, dislike)
 		oui.FireSuccessIncidcator(0)
 		if getdislikeStat(npc) < 20
 			oui.showpage(1)
 		endif 
 	Else
-		int like = 1 + (value / 100)
+		float like = 1 + (value / 100)
+		float LastLike = getlikeStat(npc)
 		increaselikestat(npc, like)
 		Topic thankyou =  Game.GetFormFromFile(0x006E6C, "ORomance.esp") as topic
 		SayTopic(npc, thankyou)
-		oui.FireSuccessIncidcator(0)
-	endif
+		oui.FireSuccessIncidcator(0) 
+endif
 EndFunction
 
 actor[] Function CheckForFollowers()
@@ -2117,6 +2133,21 @@ EndFunction
 ;------------------------------Skyromance---------------------
 string Property FactionFameKey = "SRK_FactionFame" Auto
 string Property QuestFavorKey = "SRK_QuestFavor" Auto
+string Property GiftFavorKey = "SRK_GiftFavor" Auto
+
+string property GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json" auto
+string property NPCFavorGiftPath = "Data/SkyRomance/NPCFavorGift.json" auto
+
+string SkyRomance = "SkyRomance.esp"
+
+SkyRomanceInitQuestScript SkyRomanceScript
+
+int GVSRDebugEnabled = 0x00EFF8
+int GVSRGiftFavorMultiplier = 0x00EFF9
+int GVSRFactionAffinity = 0x00EFFA
+int GVSRQuestFavor = 0x00EFFB
+
+import StringUtil
 
 int Function GetAffinityForNPCFaction(actor NPC)
 	debug.Trace("Getting faction affinity for " + NPC.getdisplayName())
@@ -2133,6 +2164,93 @@ int Function GetAffinityForNPCFaction(actor NPC)
 	return TotalAffinity
 EndFunction
 
-float Function GetQuestFavorStat(actor NPC)
-	return StorageUtil.GetFloatValue(NPC, QuestFavorKey)
+int Function GetQuestFavorStat(actor NPC)
+	return StorageUtil.GetIntValue(NPC, QuestFavorKey)
 EndFunction
+
+int Function GetGiftFavorStat(actor NPC)
+	return StorageUtil.GetIntValue(NPC, GiftFavorKey)
+EndFunction
+
+Function SR_ProcessGift(Actor NPC, float TotalValue)
+	;Get map: 1. Given gifts 2. Npc favor gift keywords
+	int GivenGiftLog = JValue.readFromFile(GivenGiftsLog)
+	string[] GiftEditID = JMap.allKeysPArray(GivenGiftLog)
+
+	int NPCFavorMap = JValue.readFromFile(NPCFavorGiftPath)
+	string NPCFavorString = JMap.getStr(NPCFavorMap, NPC.GetDisplayName())
+	string[] NPCFavorList = Split(NPCFavorString, "|")
+	Debug.Trace(NPC.GetDisplayName() + "'s Favor string: " + NPCFavorString)
+
+	;Make a map for Npc's favor gift type/keyword
+	Debug.Trace("Now making a map to store " + NPC.GetDisplayName() + "'s favor keywords of gifts!")
+	int FavorKeywordMap = JMap.object()
+	int j = 0
+	int jLen = NPCFavorList.Length
+	int FavorValue
+	while (j < jLen)
+		string CurString = NPCFavorList[j]
+		Debug.trace("Current string: " + CurString)
+		If (Substring(CurString, 0, 1) != "-" && Substring(CurString, 0, 1) != "+")
+			JMap.Setint(FavorKeywordMap, CurString, FavorValue)
+			debug.trace("Favor keyword added: " + CurString + ": " + FavorValue + " ! ")
+		Else
+			FavorValue = Substring(CurString, 1, GetLength(CurString) - 1) as int
+			if (Substring(CurString, 0, 1) == "-")
+				FavorValue = -FavorValue
+			Endif
+			Debug.Trace("Favor value changed to: " + FavorValue)
+		EndIf
+		j += 1
+	Endwhile
+	;End of making map
+
+	;Loop through all gifts, fore each type of gift, get npc's favors, and find if any of them in current 
+	int Len = GiftEditID.Length
+	int i = 0
+	int GiftFavorToAdd
+	While (i < Len)
+		;Current gift
+		Debug.Trace("Current gift: " + GiftEditID[i])
+		string CurGift = GiftEditID[i]
+		Form CurGiftForm = SkyRomanceMiscFunction.GetFormByEditorID(CurGift)
+		Keyword[] GiftKeywords = CurGiftForm.GetKeywords()
+
+		int k = 0
+		int keywordLen = GiftKeywords.Length
+		While (k < keywordLen)
+			Debug.Trace("Searching for keyword in NPC's interest list: " + GiftKeywords[k].GetString())
+			;Current keyword
+			string CurKeyword = GiftKeywords[k].GetString()
+			if (JMap.hasKey(FavorKeywordMap, CurKeyword))
+				;If this keyword is in NPC's favor list
+				;Calculate favor multiplier
+				;float CurFavorMult = JMap.getFlt(FavorKeywordMap, CurKeyword) * Jmap.getInt(GivenGiftLog, CurGift) * GetExternalFloat("SkyRomance.esp", 0x00EFF9)/10 ;Favor mult * count * 0.05(default)
+				;FinalMult = FinalMult + CurFavorMult
+				int CurKeywordFavorValue = JMap.getInt(FavorKeywordMap, CurKeyword) * JMap.getInt(GivenGiftLog, CurGift)
+				GiftFavorToAdd += curkeywordfavorvalue
+				;Debug.Trace("Keyword: " + CurKeyword + " Found! " + "Favor multiplier increased by: " + CurFavorMult + " ! " + "\nFavor Multiplier: " + GetExternalFloat("SkyRomance.esp", 0x00EFF9)/10)
+				;k = keywordLen
+			Endif
+			k += 1
+		EndWhile
+		i += 1
+	EndWhile
+
+	;Set gift favor sv for NPC
+	GiftFavorToAdd = (GiftFavorToAdd * (TotalValue / 100)) as int
+	StorageUtil.setIntValue(NPC, GiftFavorKey, GetGiftFavorStat(NPC) + GiftFavorToAdd)
+	Debug.Trace("Gift favor added: " + GiftFavorToAdd + " ! ")
+EndFunction
+
+float Function GetExternalFloat(string modesp, int id)
+	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValue()
+endfunction
+
+int Function GetExternalInt(string modesp, int id)
+	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt()
+endfunction
+
+bool Function GetExternalBool(string modesp, int id)
+	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt() == 1
+endfunction
