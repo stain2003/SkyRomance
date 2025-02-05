@@ -2257,3 +2257,10 @@ endfunction
 bool Function GetExternalBool(string modesp, int id)
 	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt() == 1
 endfunction
+
+int Function QuestFavorCurve(int QuestFavor)
+	int FinalValue
+	int Multiplier = exp(0.1 * QuestFavor)
+
+	return FinalValue
+EndFunction
