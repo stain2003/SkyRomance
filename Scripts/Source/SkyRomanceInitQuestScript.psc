@@ -162,24 +162,18 @@ Event OnKeyDown(int KeyPress)
 			int QuestFavor = (oromance.GetQuestFavorStat(target))
 			int GiftFavor = (oromance.GetGiftFavorStat(target))
 			int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionAffinity)
-			int QuestFavorM = oromance.QuestFavorCurve((oromance.GetQuestFavorStat(target))) * GetExternalInt(SkyRomance, GVSRQuestFavor)
+			int QuestFavorM = (QuestFavor * QuestFavorCurve(questfavor)) as int
 			int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
 
-			DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
+			DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
-			;TestingPrint()
-			;Debug.Notification("invalid target")
 		Endif
 	EndIf
 
 	If KeyPress == DebugKeyB
-		; string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
-		; UpdateAffinityOnQuestCompleted(DebugString)
-		;TestingPrint()
-		; debug.MessageBox(GetFactionFame(GetFormByEditorID("CrimeFactionWhiterun") as Faction))
-		;SR_ProcessGift()
-		debug.Notification("Player's SV: " + ORomance.GetPlayerSV())
+		string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
+		UpdateAffinityOnQuestCompleted(DebugString)
 	Endif
 EndEvent
 
@@ -355,3 +349,8 @@ EndFunction
 int Function GetExternalInt(string modesp, int id)
 	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt()
 endfunction
+
+float Function QuestFavorCurve(int FavorValue)
+	
+	return SkyRomanceMiscFunction.IntLeanearRemap(FavorValue, 0, 20, 10, 5)
+EndFunction

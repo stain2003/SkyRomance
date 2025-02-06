@@ -53,15 +53,15 @@ Function SKSEGetNPCInventory(Actor TargetNPC) Global native
 
 Function GetAddedItems(Actor TargetNPC) Global native
 
-int Function IntLeanearRemap(int value, int input_min, int input_max, int output_min, int output_max) Global
+float Function IntLeanearRemap(int value, int input_min, int input_max, int output_min, int output_max) Global
 
     if(value > input_max)
         value = input_max
     ElseIf(value < input_min)
         value = input_min
     Endif
-    
-    int output_value = (value - input_min) / (input_max - input_min) * (output_max - output_min) + output_min
-   
-    return output_value
+ 
+    float Out = value * ((output_max - output_min) / (input_max - input_min) as float)  + output_min
+    return Out
+
 EndFunction
