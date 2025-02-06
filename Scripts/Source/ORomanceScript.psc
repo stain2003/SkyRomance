@@ -453,18 +453,19 @@ int function GetNPCSV(actor npc)
 	endif 
 
 	int FactionAffity = (GetAffinityForNPCFaction(npc)) * GetExternalInt(SkyRomance, GVSRFactionAffinity)
-	int QuestFavor = (GetQuestFavorStat(npc)) * GetExternalInt(SkyRomance, GVSRQuestFavor)
+	int QuestFavor = QuestFavorCurve((GetQuestFavorStat(npc))) * GetExternalInt(SkyRomance, GVSRQuestFavor)
 	int GiftFavor = (GetGiftFavorStat(npc)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
 	
 	Debug.Trace("+FactionAffinity: " + FactionAffity)
 	Debug.Trace("+QuestFavor: " + QuestFavor)
 	Debug.Trace("+GiftFavor: " + giftFavor)
+	;Debug.messagebox("FactionAffinity: " + FactionAffity + " | QuestFavor: " + QuestFavor + " | GiftFavor: " + giftFavor)
 
 	npcsv -= FactionAffity + questfavor + giftfavor
 
 	Debug.Trace("Final SV: " + npcSV)
 
-	return npcSV
+return npcSV
 
 EndFunction
 
@@ -2141,7 +2142,6 @@ string property NPCFavorGiftPath = "Data/SkyRomance/NPCFavorGift.json" auto
 string SkyRomance = "SkyRomance.esp"
 
 SkyRomanceInitQuestScript SkyRomanceScript
-
 int GVSRDebugEnabled = 0x00EFF8
 int GVSRGiftFavorMultiplier = 0x00EFF9
 int GVSRFactionAffinity = 0x00EFFA
@@ -2258,9 +2258,6 @@ bool Function GetExternalBool(string modesp, int id)
 	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt() == 1
 endfunction
 
-int Function QuestFavorCurve(int QuestFavor)
-	int FinalValue
-	int Multiplier = exp(0.1 * QuestFavor)
-
-	return FinalValue
+int Function QuestFavorCurve(int FavorValue)
+	return SkyRomanceMiscFunction.IntLeanearRemap(FavorValue, 0, 20, 10, 5)
 EndFunction

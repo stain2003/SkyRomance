@@ -5,15 +5,26 @@ import PapyrusUtil
 import StringUtil
 
 ;Script Linker
+string SkyRomance = "SkyRomance.esp"
 ORomanceScript ORomance
 
 ;MCM property
 int Property DebugKeyA = 35 Auto
 int Property DebugKeyB = 34 Auto
+
+string Property FactionFameKey = "SRK_FactionFame" Auto
+string Property QuestFavorKey = "SRK_QuestFavor" Auto
+string Property GiftFavorKey = "SRK_GiftFavor" Auto
+
 GlobalVariable Property DebugEnabled Auto
 GlobalVariable Property GiftFavorMultiplier Auto
 GlobalVariable Property QuestFavorMultiplier Auto
 GlobalVariable Property FactionFavorMultiplier Auto
+
+int GVSRDebugEnabled = 0x00EFF8
+int GVSRGiftFavorMultiplier = 0x00EFF9
+int GVSRFactionAffinity = 0x00EFFA
+int GVSRQuestFavor = 0x00EFFB
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
@@ -22,6 +33,7 @@ float UpdateInterval = 5.0
 Quest RecentQuest
 int RecentFailedQuest
 int RecentCompletedQuest
+
 string ObjectiveMapPath = "Data/SkyRomance/ObjectiveMap.json"
 string QuestMapPath = "Data/SkyRomance/QuestMap.json"
 string GivenGiftsLog = "Data/SkyRomance/Log/GivenGiftsLog.json"
@@ -144,7 +156,16 @@ Event OnKeyDown(int KeyPress)
 			if  (target.IsInCombat() || OUtils.IsChild(target) || target.isdead() || !(target.GetRace().HasKeyword(Keyword.GetKeyword("ActorTypeNPC"))))
 				return 
 			endif
-			SKSEGetNPCInventory(target)
+			;SKSEGetNPCInventory(target)
+			
+			int FactionAffity = (oromance.GetAffinityForNPCFaction(target))
+			int QuestFavor = (oromance.GetQuestFavorStat(target))
+			int GiftFavor = (oromance.GetGiftFavorStat(target))
+			int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionAffinity)
+			int QuestFavorM = oromance.QuestFavorCurve((oromance.GetQuestFavorStat(target))) * GetExternalInt(SkyRomance, GVSRQuestFavor)
+			int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
+
+			DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
 			;TestingPrint()
@@ -272,9 +293,6 @@ Function UpdateAffinityOnQuestCompleted(String inputString)
 EndFunction
 
 ;-----------Set and get value from StorageUtil--------------------
-string Property FactionFameKey = "SRK_FactionFame" Auto
-string Property QuestFavorKey = "SRK_QuestFavor" Auto
-string Property GiftFavorKey = "SRK_GiftFavor" Auto
 
 Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
 	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
@@ -333,3 +351,7 @@ Function WriteAddedItemsToJson(string[] itemkey, int[] count)
 		;ConsoleUtil.PrintMessage("Papyrus: Writing map:" + "\n" + DebugString)
 	EndIf
 EndFunction
+
+int Function GetExternalInt(string modesp, int id)
+	return (game.GetFormFromFile(id, modesp) as GlobalVariable).GetValueInt()
+endfunction
