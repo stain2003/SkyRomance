@@ -1,7 +1,12 @@
 {
+<<<<<<< HEAD
   "ArmorIronCuirass": 1,
   "IronSword": 1,
   "IronWarAxe": 1,
   "Lockpick": 10,
   "Longbow": 1
+=======
+  "ArmorIronBoots": 1,
+  "IronArrow": 23
+>>>>>>> parent of bf187b0 (gift type awareness added!)
 }

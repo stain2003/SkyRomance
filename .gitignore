@@ -1,3 +1,4 @@
 *.ppj
 *.code-workspace
 .vscode/tasks.json
+*.pdb

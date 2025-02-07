@@ -23,8 +23,8 @@ GlobalVariable Property FactionFavorMultiplier Auto
 
 int GVSRDebugEnabled = 0x00EFF8
 int GVSRGiftFavorMultiplier = 0x00EFF9
-int GVSRFactionAffinity = 0x00EFFA
-int GVSRQuestFavor = 0x00EFFB
+int GVSRFactionMultiplier = 0x00EFFA
+int GVSRQuestFavorMultiplier = 0x00EFFB
 
 bool isAreaCheckerTimerStart = false
 float UpdateInterval = 5.0
@@ -101,7 +101,10 @@ Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, 
 	;_args: EditorID
 	;_argc: FormID
 	;Map validation
-	Debug.Notification("Mod Event:\n" + _args + ": is completed")
+	If (isDebugEnable())
+		Debug.Notification("Mod Event:\n" + _args + ": is completed")
+		; code
+	EndIf
 	int QuestMap = JValue.readFromFile("Data/SkyRomance/QuestMap.json")
 	if (QuestMap == 0)
 		debug.Notification("Invalid QuestMap.Json!!!")
@@ -158,22 +161,26 @@ Event OnKeyDown(int KeyPress)
 			endif
 			;SKSEGetNPCInventory(target)
 			
-			int FactionAffity = (oromance.GetAffinityForNPCFaction(target))
+			string DebugString = "+1|Faendal|"
+			UpdateAffinityOnQuestCompleted(DebugString)
+			; int FactionAffity = (oromance.GetAffinityForNPCFaction(target))
 			int QuestFavor = (oromance.GetQuestFavorStat(target))
-			int GiftFavor = (oromance.GetGiftFavorStat(target))
-			int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionAffinity)
-			int QuestFavorM = (QuestFavor * QuestFavorCurve(questfavor)) as int
-			int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
+			; int GiftFavor = (oromance.GetGiftFavorStat(target))
+			; int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionMultiplier)
+			int QuestFavorM = (QuestFavor * QuestFavorCurve(questfavor)) as int * GetExternalInt(SkyRomance, GVSRQuestFavorMultiplier)
+			; int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
+			Debug.trace("NPC's Total value of QF: " + QuestFavorM + " = " + QuestFavor + " * " + QuestFavorCurve(QuestFavor))
 
-			DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
+			;DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
 		Endif
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+2|CrimeFactionWhiterun|+1|Ysolda|-1|Nazeem|+2|Faendal|DLC1Serana|"
+		string DebugString = "+1|Faendal|"
 		UpdateAffinityOnQuestCompleted(DebugString)
+
 	Endif
 EndEvent
 
@@ -300,12 +307,15 @@ EndFunction
 Function IncreaseQuestFavor(Actor NPC, int invalue)
 	;This function will increase Npc's QuestFavor value for a permenant impact, also like stat for a tempory 'buff'.
 	int curVal = oromance.GetQuestFavorStat(NPC)
-	StorageUtil.SetIntValue(NPC, QuestFavorKey, curVal + inValue)
-	;optional, leave like stat alone for now
-	;oromance.increaselikestat(NPC, inValue)
-	
-	If (isDebugEnable())
-		Debug.notification(NPC.GetDisplayName() + "'s affinity increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
+	If (curVal < 20)
+		StorageUtil.SetIntValue(NPC, QuestFavorKey, curVal + inValue)
+		If (isDebugEnable())
+			Debug.notification(NPC.GetDisplayName() + "'s Quest Favor increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
+		EndIf
+	else
+		If (isDebugEnable())
+			Debug.notification(NPC.GetDisplayName() + "'s Quest Favor is already maxed!")
+		Endif
 	EndIf
 Endfunction
 
@@ -351,6 +361,6 @@ int Function GetExternalInt(string modesp, int id)
 endfunction
 
 float Function QuestFavorCurve(int FavorValue)
-	
+
 	return SkyRomanceMiscFunction.IntLeanearRemap(FavorValue, 0, 20, 10, 5)
 EndFunction
