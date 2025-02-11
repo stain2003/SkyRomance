@@ -9,8 +9,8 @@ string SkyRomance = "SkyRomance.esp"
 ORomanceScript ORomance
 
 ;MCM property
-int Property DebugKeyA = 35 Auto
-int Property DebugKeyB = 34 Auto
+int Property DebugKeyA = 34 Auto
+int Property DebugKeyB = 35 Auto
 
 string Property FactionFameKey = "SRK_FactionFame" Auto
 string Property QuestFavorKey = "SRK_QuestFavor" Auto
@@ -55,12 +55,34 @@ Event Oninit()
 EndEvent
 
 event OnLoadGameGlobal()
-
 	SR_InitEvents()
 	SR_InitKeys()
 	DbFormTimer.CancelTimer(self, 0)
-	;DbFormTimer.StartTimer(self, UpdateInterval, 0)
+	DbFormTimer.StartTimer(self, UpdateInterval, 0)
 EndEvent
+
+; Event OStimStart(string eventName, string strArg, float numArg, Form sender)
+;     RegisterForModEvent("ostim_scenechanged", "OStimSceneChanged")
+;     RegisterForModEvent("ostim_end", "OStimEnd")
+; 	Debug.trace("Stim start: " + strArg)
+; endEvent
+
+; Event OStimSceneChanged(string eventName, string strArg, float numArg, Form sender)
+; 	Debug.trace("Scene changed to: " + strArg)
+;     if OMetadata.FindAction(strArg, "blowjob") > -1
+; 		Debug.notification("Blowjob scene detected!")
+; 		SRApplyBJExpression(Game.GetPlayer())
+; 	Else
+; 		SRResetAllExpression(Game.GetPlayer())
+;     endif
+; EndEvent
+
+; Event OStimEnd(string eventName, string strArg, float numArg, Form sender)
+; 	SRResetAllExpression(Game.GetPlayer())
+;     UnregisterForModEvent("ostim_scenechanged")
+;     UnregisterForModEvent("ostim_end")
+; endevent
+
 
 ;------------------------------------------------On Objective Update Deleagtor-----------------------------------------------
 Event OnQuestObjectiveStateChangedGlobal(Quest akQuest, string displayText, int oldState, int newState, int objectiveIndex, alias[] ojbectiveAliases)
@@ -161,15 +183,15 @@ Event OnKeyDown(int KeyPress)
 			endif
 			;SKSEGetNPCInventory(target)
 			
-			string DebugString = "+1|Faendal|"
-			UpdateAffinityOnQuestCompleted(DebugString)
-			; int FactionAffity = (oromance.GetAffinityForNPCFaction(target))
-			int QuestFavor = (oromance.GetQuestFavorStat(target))
-			; int GiftFavor = (oromance.GetGiftFavorStat(target))
-			; int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionMultiplier)
-			int QuestFavorM = (QuestFavor * QuestFavorCurve(questfavor)) as int * GetExternalInt(SkyRomance, GVSRQuestFavorMultiplier)
-			; int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
-			Debug.trace("NPC's Total value of QF: " + QuestFavorM + " = " + QuestFavor + " * " + QuestFavorCurve(QuestFavor))
+			; string DebugString = "+1|Faendal|"
+			; UpdateAffinityOnQuestCompleted(DebugString)
+			; ; int FactionAffity = (oromance.GetAffinityForNPCFaction(target))
+			; int QuestFavor = (oromance.GetQuestFavorStat(target))
+			; ; int GiftFavor = (oromance.GetGiftFavorStat(target))
+			; ; int FactionAffityM = (oromance.GetAffinityForNPCFaction(target)) * GetExternalInt(SkyRomance, GVSRFactionMultiplier)
+			; int QuestFavorM = (QuestFavor * QuestFavorCurve(questfavor)) as int * GetExternalInt(SkyRomance, GVSRQuestFavorMultiplier)
+			; ; int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
+			; Debug.trace("NPC's Total value of QF: " + QuestFavorM + " = " + QuestFavor + " * " + QuestFavorCurve(QuestFavor))
 
 			;DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
@@ -178,9 +200,16 @@ Event OnKeyDown(int KeyPress)
 	EndIf
 
 	If KeyPress == DebugKeyB
-		string DebugString = "+1|Faendal|"
-		UpdateAffinityOnQuestCompleted(DebugString)
-
+		int strength = 0
+		while strength < 100
+			MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", strength)
+			strength += 1
+		EndWhile
+		While strength > 0
+			MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", strength)
+			strength -= 1
+		EndWhile
+		
 	Endif
 EndEvent
 
@@ -191,10 +220,19 @@ EndEvent
 ;---------------------------------------------------------Timer Event------------------------------------------------------
 Event OnTimer(int aiTimerID)
 	if aiTimerID == 0
-		;Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())If (DebugEnable)
-		If (isDebugEnable())
-			Debug.Trace("Timer ticked" + ": ")
-		EndIf
+		; If (isDebugEnable())	
+		; 	Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())
+		; Endif
+
+		; if (MuFacialExpressionExtended.GetExpressionValueByName(game.GetPlayer(), "Extra_Sucked_Cheeks") != 80)
+		; 	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Extra_Sucked_Cheeks", 80)
+		; else
+		; 	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Extra_Sucked_Cheeks", 0)
+		; EndIf
+
+		; If (isDebugEnable())
+		; 	Debug.Trace("Timer ticked" + ": ")
+		; EndIf
 		DbFormTimer.StartTimer(self, UpdateInterval, 0)
 	Endif
 EndEvent
@@ -212,10 +250,12 @@ EndFunction
 
 Function SR_RegisterEvent()
 	DbSkseEvents.RegisterFormForGlobalEvent("OnQuestObjectiveStateChangedGlobal", self)
+    ;RegisterForModEvent("ostim_start", "OStimStart")
 EndFunction
 
 Function SR_UnRegisterEvent()
 	DbSkseEvents.UnregisterFormForGlobalEvent_All("OnQuestObjectiveStateChangedGlobal", self)
+    ;UnregisterForModEvent("ostim_start")
 EndFunction
 
 Function SR_RegisterModEvents()
