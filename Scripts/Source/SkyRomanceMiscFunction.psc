@@ -66,24 +66,24 @@ float Function IntLeanearRemap(int value, int input_min, int input_max, int outp
 
 EndFunction
 
-Function SRApplyBJExpression(Actor TargetNPC) Global
+; Function SRApplyBJExpression(Actor TargetNPC) Global
 
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", 100)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "BJ_MouthStretch", 80)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Kiss", 80)
-	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "ChJSh", 30)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Eyes_relaxed", 60)
-    ;MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Opened_lips", 60)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", 100)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "BJ_MouthStretch", 80)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Kiss", 80)
+; 	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "ChJSh", 30)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Eyes_relaxed", 60)
+;     ;MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Opened_lips", 60)
   
-EndFunction
+; EndFunction
 
-Function SRResetAllExpression(Actor TargetNPC) Global
+; Function SRResetAllExpression(Actor TargetNPC) Global
 
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", 0)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "BJ_MouthStretch", 0)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Kiss", 0)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "ChJSh", 0)
-    MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Eyes_relaxed", 0)
-    ;MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Opened_lips", 0)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", 0)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "BJ_MouthStretch", 0)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Kiss", 0)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "ChJSh", 0)
+;     MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Eyes_relaxed", 0)
+;     ;MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Opened_lips", 0)
     
-EndFunction
+; EndFunction

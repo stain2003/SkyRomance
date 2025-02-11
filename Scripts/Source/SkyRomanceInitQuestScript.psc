@@ -200,15 +200,6 @@ Event OnKeyDown(int KeyPress)
 	EndIf
 
 	If KeyPress == DebugKeyB
-		int strength = 0
-		while strength < 100
-			MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", strength)
-			strength += 1
-		EndWhile
-		While strength > 0
-			MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Sucked_Cheeks", strength)
-			strength -= 1
-		EndWhile
 		
 	Endif
 EndEvent
