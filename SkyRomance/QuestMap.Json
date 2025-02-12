@@ -100,8 +100,45 @@
 	"TGLeadership": "+5|ThievesGuildFaction|+3|Karliah|Brynjolf",
 	
 
+	"t02": "+3|Dinya",
+	"MS04": "+4|FromDeepestFathoms",
+	"FreeformRiften13": "+3|Alessandra",
+	"FreeformRiften10": "+4|Balimund",
+	"FreeformRiften15": "+3|Bolli|Kleppr",
+	"FreeformRiften08": "+4|BrandShei",
+	"FreeformRiften05": "+3|Dinya",
+	"FreeformRiften17": "+4|Filnjar",
+	"FreeformRiften16": "+2|Harrald",
+	"FreeformRiften19": "+5|Hofgrir",
+	"FreeformRiften04": "+4|Ingun",
+	"FreeformRiften01": "+2|RiftenMistveilKeepFaction",
+	"FreeformRiften18": "+3|Madesi",
+	"FreeformRiften07": "+4|Marise",
+	"FreeformRiften09": "+4|Mjoll|+2|Aerin",
+	"FreeformRiften03": "+3|Romlyn",
+	"FreeformRiften22": "+4|Shadr|+1|Sapphire",
+	"FreeformRiften11": "+4|Svana|-2|Haelga",
+	"FreeformRiften06": "+3|TalenJei|+2|Keerava",
+	"FreeformRiften12": "+4|Wujeeta",
+	"FreeformRiften20": "+2|RiftenMistveilKeepFaction",
+	"FreeformRiften14": "+3|Wylandriah",
 
-	"MS13": "+5|CamillaValerius|+5|LucanValerius",
+
+	"T03": "+2|TownWhiterunFaction|+3|WhiterunTempleofKynarethFaction|+5|DanicaPureSpring",
+	"MS09": "+7|WhiterunHouseGrayManeFaction",
+	"MS13": "+4|CamillaValerius|+4|LucanValerius",
+	"FreeformWhiterunQuest03": "+4|AdrianneAvenicci",
+	"Favor204": "+5|Amren|+2|Saffir",
+	"FreeformWhiterunQuest04": "+3|Andurs",
+	"FreeformWhiterunQuest02": "+3|Brenuin",
+	"Favor013": "+3|",
+	"FreeformWhiterunQuest05": "+2|Arcadia|FarengarSecretFire",
+	"Favor110": "+3|Ysolda",
+
+	"dunYngolBarrowQST": "+3|Ranmir",
+	"Favor158": "+3|Korir",
+	"Favor018": "+3|",
+
 	
 	"FreeformRiverwood01": "|+2|CamillaValerius|+1|TownRiverwoodFaction|",
 	"FreeformSkyhavenTempleA": "+3|Delphine|+5|BladesFaction"

@@ -29,5 +29,18 @@
 	"CWObj/902": "+1|CWSonsFaction",
 	
 	"CWSiegeObj/2999": "+2|CWImperialFaction|TownWhiterunFaction",
-	"CWSiegeObj/1210": "+2|CWSonsFaction|TownWhiterunFaction"
+	"CWSiegeObj/1210": "+2|CWSonsFaction|TownWhiterunFaction",
+
+	"FreeformRiften02/20": "+4|Sibbi",
+	"FreeformRiften02/30": "+5|Lynly",
+	"TG01/20": "-3|Keerava",
+	"TG01/21": "+1|Keerava",
+	"TG01/30": "-3|Bersi",
+	"TG01/31": "-3|Bersi",
+	"TG01/40": "-2|Haelga",
+	"TG01/41": "+2|ThievesGuildFaction",
+
+	"MS08/199": "+8|Saadia"
+	
+
 }
