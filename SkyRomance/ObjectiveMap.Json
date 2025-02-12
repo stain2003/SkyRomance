@@ -7,5 +7,27 @@
 	"FreeformRiverwood01/220": "|+3|Sven|-5|Faendal|",
 	"FreeformRiverwood01/230": "|+3|Sven|-5|Faendal|",
 	"MG01/30": "+1|Faralda",
-	"MG05/40": "+3|TownWinterholdFaction"
+	"MG05/40": "+3|TownWinterholdFaction",
+
+	"CWObj/201": "+1|CWImperialFaction",
+	"CWObj/301": "+1|CWImperialFaction",
+	"CWObj/401": "+1|CWImperialFaction",
+	"CWObj/501": "+1|CWImperialFaction",
+	"CWObj/601": "+1|CWImperialFaction",
+	"CWObj/701": "+1|CWImperialFaction",
+	"CWObj/801": "+1|CWImperialFaction",
+	"CWObj/901": "+1|CWImperialFaction",
+
+	"CWObj/102": "+1|CWSonsFaction",
+	"CWObj/202": "+1|CWSonsFaction",
+	"CWObj/302": "+1|CWSonsFaction",
+	"CWObj/402": "+1|CWSonsFaction",
+	"CWObj/502": "+1|CWSonsFaction",
+	"CWObj/602": "+1|CWSonsFaction",
+	"CWObj/702": "+1|CWSonsFaction",
+	"CWObj/802": "+1|CWSonsFaction",
+	"CWObj/902": "+1|CWSonsFaction",
+	
+	"CWSiegeObj/2999": "+2|CWImperialFaction|TownWhiterunFaction",
+	"CWSiegeObj/1210": "+2|CWSonsFaction|TownWhiterunFaction"
 }

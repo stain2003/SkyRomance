@@ -78,7 +78,26 @@
 	"DBDestroy": "-20|DarkBrotherhoodFaction|+3|TownRiftenFaction|TownFalkreathFaction|TownMarkarthFaction|TownWindhelmFaction|TownSolitudeFaction|TownWhiterunFaction|TownMorthalFaction|TownDawnstarFaction|TownWinterholdFaction",
 	"DarkBrotherhoodSanctuaryRepair": "+5|Nazir",
 
+	"CW01A": "+1|CWImperialFaction",
+	"CW02A": "+2|CWImperialFaction|",
 
+	"CW03": "+1|TownWhiterunFaction",
+
+	"CW01B": "+1|CWSonsFaction",
+	"CW02B": "+2|CWSonsFaction|",
+
+	"TG00MaulHandler": "+2|Brynjolf",
+	"TG01": "+2|ThievesGuildFaction",
+	"TG02": "+2|ThievesGuildFaction",
+	"TG03": "+2|ThievesGuildFaction|Brynjolf",
+	"TG04": "+1|ThievesGuildFaction|Brynjolf",
+	"TG05": "+1|ThievesGuildFaction",
+	"TG06": "+1|ThievesGuildFaction|Karliah|Brynjolf",
+	"TG07": "+2|ThievesGuildFaction|Karliah|Brynjolf",
+	"TG08A": "+2|ThievesGuildFaction|Karliah|Brynjolf",
+	"TG08B": "+2|ThievesGuildFaction|Karliah|Brynjolf",
+	"TG09": "+3|ThievesGuildFaction|+5|Karliah|+3|Brynjolf",
+	"TGLeadership": "+5|ThievesGuildFaction|+3|Karliah|Brynjolf",
 	
 
 
