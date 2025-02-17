@@ -53,6 +53,8 @@ Function SKSEGetNPCInventory(Actor TargetNPC) Global native
 
 Function GetAddedItems(Actor TargetNPC) Global native
 
+actor Function SKSEGetBarterNPC() Global native
+
 float Function IntLeanearRemap(int value, int input_min, int input_max, int output_min, int output_max) Global
 
     if(value > input_max)
@@ -65,6 +67,7 @@ float Function IntLeanearRemap(int value, int input_min, int input_max, int outp
     return Out
 
 EndFunction
+
 
 ; Function SRApplyBJExpression(Actor TargetNPC) Global
 

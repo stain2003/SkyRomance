@@ -61,28 +61,6 @@ event OnLoadGameGlobal()
 	DbFormTimer.StartTimer(self, UpdateInterval, 0)
 EndEvent
 
-; Event OStimStart(string eventName, string strArg, float numArg, Form sender)
-;     RegisterForModEvent("ostim_scenechanged", "OStimSceneChanged")
-;     RegisterForModEvent("ostim_end", "OStimEnd")
-; 	Debug.trace("Stim start: " + strArg)
-; endEvent
-
-; Event OStimSceneChanged(string eventName, string strArg, float numArg, Form sender)
-; 	Debug.trace("Scene changed to: " + strArg)
-;     if OMetadata.FindAction(strArg, "blowjob") > -1
-; 		Debug.notification("Blowjob scene detected!")
-; 		SRApplyBJExpression(Game.GetPlayer())
-; 	Else
-; 		SRResetAllExpression(Game.GetPlayer())
-;     endif
-; EndEvent
-
-; Event OStimEnd(string eventName, string strArg, float numArg, Form sender)
-; 	SRResetAllExpression(Game.GetPlayer())
-;     UnregisterForModEvent("ostim_scenechanged")
-;     UnregisterForModEvent("ostim_end")
-; endevent
-
 
 ;------------------------------------------------On Objective Update Deleagtor-----------------------------------------------
 Event OnQuestObjectiveStateChangedGlobal(Quest akQuest, string displayText, int oldState, int newState, int objectiveIndex, alias[] ojbectiveAliases)
