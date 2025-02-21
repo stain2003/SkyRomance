@@ -171,6 +171,8 @@ Event OnKeyDown(int KeyPress)
 			; ; int GiftFavorM = (oromance.GetGiftFavorStat(target)) * GetExternalInt(SkyRomance, GVSRGiftFavorMultiplier)
 			; Debug.trace("NPC's Total value of QF: " + QuestFavorM + " = " + QuestFavor + " * " + QuestFavorCurve(QuestFavor))
 
+			IncreaseQuestFavor(Target, 3)
+			Debug.Notification(Target.GetDisplayName() + "'s quest favor increased to: " + GetNPCFavor(Target, QuestFavorKey))
 			;DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
@@ -178,7 +180,7 @@ Event OnKeyDown(int KeyPress)
 	EndIf
 
 	If KeyPress == DebugKeyB
-		
+		AmplifySpeech()
 	Endif
 EndEvent
 
@@ -210,6 +212,13 @@ EndEvent
 
 ;--------------------------------------------------------Function------------------------------------------------------------------
 ;
+Function AmplifyBarteningByAffinity(Actor Merchant)
+	float Amplifier
+	Amplifier += GetNPCFavor(Merchant, QuestFavorKey)
+	Amplifier += GetNPCFavor(Merchant, FactionFameKey) * 0.5
+	Amplifier += GetNPCFavor(Merchant, GiftFavorKey) * 0.5
+EndFunction
+
 ;------------Begin Register---------------------------------------
 Function SR_InitEvents()
 	SR_UnRegisterEvent()
@@ -328,7 +337,9 @@ Function IncreaseQuestFavor(Actor NPC, int invalue)
 	EndIf
 Endfunction
 
-;---------End Register-----------------------------------------
+int Function GetNPCFavor(Actor NPC, string inKey)
+	return StorageUtil.GetIntValue(NPC, inKey)
+EndFunction
 
 ;---------Begin MCM Setter & Caller----------------
 Function SetUpdateInterval(float inTimerInterval)
