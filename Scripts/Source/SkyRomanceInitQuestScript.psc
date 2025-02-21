@@ -61,7 +61,6 @@ event OnLoadGameGlobal()
 	DbFormTimer.StartTimer(self, UpdateInterval, 0)
 EndEvent
 
-
 ;------------------------------------------------On Objective Update Deleagtor-----------------------------------------------
 Event OnQuestObjectiveStateChangedGlobal(Quest akQuest, string displayText, int oldState, int newState, int objectiveIndex, alias[] ojbectiveAliases)
 	;Dormant = 0;Displayed = 1;Completed = 2;CompletedDisplayed = 3;Failed = 4;FailedDisplayed = 5
@@ -102,21 +101,21 @@ Event OnQuestCompletedEvent(String _eventName, String _args, Float _argc = 1.0, 
 	;_argc: FormID
 	;Map validation
 	If (isDebugEnable())
-		Debug.Notification("Mod Event:\n" + _args + ": is completed")
+		Debug.Notification("Mod Event: " + _args + ": is completed")
 		; code
 	EndIf
 	int QuestMap = JValue.readFromFile("Data/SkyRomance/QuestMap.json")
 	if (QuestMap == 0)
 		debug.Notification("Invalid QuestMap.Json!!!")
 		return
-	Endif
-
-	;ReadString
-	String RelationShipChangelist = JMap.getStr(QuestMap, _args)
-	If (RelationShipChangelist != "")
-		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
-	Else
-		Debug.Notification("Invalid Quest EditorID! \nOr can't find target QuestID in QuestMap.json")
+	else
+		;ReadString
+		String RelationShipChangelist = JMap.getStr(QuestMap, _args)
+		If (RelationShipChangelist != "")
+			ProcessAffinityUpdateString(RelationShipChangelist)
+		Else
+			Debug.Notification("Invalid or can't find Quest EditorID:" + _args + " !")
+		Endif
 	Endif
 Endevent
 
@@ -140,7 +139,7 @@ Event OnQuestObjectiveUpdatedEvent(String _eventName, String _args, Float _argc 
 	String Objective = _args + "/" + Index
 	String RelationShipChangelist = JMap.getStr(ObjectiveMap, Objective)
 	If (RelationShipChangelist != "")
-		UpdateAffinityOnQuestCompleted(RelationShipChangelist)
+		ProcessAffinityUpdateString(RelationShipChangelist)
 	Else
 		If (isDebugEnable())
 			Debug.Notification("Invalid Quest objective EditorID! \nOr can't find objective in QuestMap.json:\n" + Objective)
@@ -172,7 +171,10 @@ Event OnKeyDown(int KeyPress)
 			; Debug.trace("NPC's Total value of QF: " + QuestFavorM + " = " + QuestFavor + " * " + QuestFavorCurve(QuestFavor))
 
 			IncreaseQuestFavor(Target, 3)
-			Debug.Notification(Target.GetDisplayName() + "'s quest favor increased to: " + GetNPCFavor(Target, QuestFavorKey))
+			IncreaseGiftFavor(Target, 3)
+			IncreaseFactionFame(GetFormByEditorID("TownRiverwoodFaction") as Faction, 3)
+			Debug.Notification(Target.GetDisplayName() + "'s favor increased to: " + GetNPCFavor(Target, QuestFavorKey) + " | " + GetNPCFavor(Target,GiftFavorKey) + " | " + GetNPCFactionFavor(Target))
+			;AmplifyBarteningByAffinity(Target)
 			;DEBUG.MessageBox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + QUestFavorM + " | " + QuestFavor + " * " + QuestFavorCurve(QuestFavor) + "\nFactionAffinity: " + FactionAffityM + " | " + FactionAffity + "\nGiftFavor: " + GiftFavorM + " | " + GiftFavor)
 			;Debug.messagebox(Target.GetDisplayName() + "'s SV: " + oromance.GetNPCSV(target) + "\nQuestFavor: " + oromance.GetQuestFavorStat(Target) + "\nFactionAffinity: " + oromance.GetAffinityForNPCFaction(target) + "\nGiftFavor: " + oromance.GetGiftFavorStat(target) + "\nLikeStat: " + oromance.getlikeStat(target))
 		else
@@ -180,30 +182,13 @@ Event OnKeyDown(int KeyPress)
 	EndIf
 
 	If KeyPress == DebugKeyB
-		AmplifySpeech()
+		;AmplifyPlayerSpeech()
 	Endif
 EndEvent
 
-
-
-
-
-;---------------------------------------------------------Timer Event------------------------------------------------------
+;-------------------------------------------------Timer Event----------------------------------------------------------------
 Event OnTimer(int aiTimerID)
 	if aiTimerID == 0
-		; If (isDebugEnable())	
-		; 	Debug.Notification("Timer ticked" + ": " + RealtimeUtil.GetRealTime())
-		; Endif
-
-		; if (MuFacialExpressionExtended.GetExpressionValueByName(game.GetPlayer(), "Extra_Sucked_Cheeks") != 80)
-		; 	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Extra_Sucked_Cheeks", 80)
-		; else
-		; 	MuFacialExpressionExtended.SetExpressionByName(Game.GetPlayer(), "Extra_Sucked_Cheeks", 0)
-		; EndIf
-
-		; If (isDebugEnable())
-		; 	Debug.Trace("Timer ticked" + ": ")
-		; EndIf
 		DbFormTimer.StartTimer(self, UpdateInterval, 0)
 	Endif
 EndEvent
@@ -215,10 +200,67 @@ EndEvent
 Function AmplifyBarteningByAffinity(Actor Merchant)
 	float Amplifier
 	Amplifier += GetNPCFavor(Merchant, QuestFavorKey)
-	Amplifier += GetNPCFavor(Merchant, FactionFameKey) * 0.5
+	Amplifier += GetNPCFactionFavor(Merchant) * 0.5
 	Amplifier += GetNPCFavor(Merchant, GiftFavorKey) * 0.5
+
+	AmplifyPlayerSpeech(Amplifier)
 EndFunction
 
+Function ProcessAffinityUpdateString(String inputString)
+	;This function is used to update Npc's QuestFavor stat and FactionAffinity stat towards Player
+	string[] SplitedStrings = Split(inputString, "|")
+	int StrNum = SplitedStrings.Length
+	int iter = 0
+	string outputstring = "Quest Objective Completed! NPC's SV has changed:"
+	int FavorValue
+	while iter < StrNum
+		String CurString = SplitedStrings[iter]
+		Form curForm = GetFormByEditorID(CurString)
+
+		If (curForm) ;Check to see if current string is EditorID or int value
+			Actor CurNPC = GetFormByEditorID(CurString + "REF") as Actor
+			Faction CurFaction = GetFormByEditorID(CurString) as Faction
+
+			If (CurNPC) 
+				;------------------------look for npcs entry----------------------------
+				IncreaseQuestFavor(CurNPC, FavorValue)
+				outputstring = outputstring + "\n" + CurString + ": " + FavorValue + ", now is " + oromance.GetQuestFavorStat(CurNPC)
+			elseif (CurFaction)
+				;------------------------look for faction entry------------------------
+				IncreaseFactionFame(CurFaction,  FavorValue)
+				outputstring = outputstring + "\n" + CurString + ": " + FavorValue + ", now is " + StorageUtil.GetIntValue(curForm, FactionFameKey)
+			Elseif (isDebugEnable())
+				Debug.Notification("This editorID is not what we look for: " + CurString)
+				Debug.trace("This editorID is not what we look for: " + CurString)
+			endif
+		else
+			;Update SVOffset
+			FavorValue = Substring(CurString, 1, GetLength(CurString) - 1) as int
+			if (FavorValue == 0 && isDebugEnable())
+				Debug.Notification("Invalid editorID entry: " + CurString)
+				Debug.trace("Invalid editorID entry: " + CurString + " | Source: " + inputString)
+			Endif
+			
+			String FirstChar = substring(CurString, 0, 1)
+			If (FirstChar == "-")
+				FavorValue = -FavorValue
+			EndIf
+		EndIf
+		iter += 1
+	EndWhile
+	If (isDebugEnable())
+		debug.Trace(outputstring)
+		debug.messagebox(outputstring)
+	EndIf
+EndFunction
+
+string Function PrintNPCFavor(Actor NPC)
+	string OutputString = NPC.GetDisplayName() + ": "
+	OutputString += "\nQuest Favor: " + GetNPCFavor(NPC, QuestFavorKey)
+	OutputString += "\nGift Favor: " + GetNPCFavor(NPC, GiftFavorKey)
+	OutputString += "\nFaction Fame: " + GetNPCFactionFavor(NPC)
+	return OutputString
+EndFunction
 ;------------Begin Register---------------------------------------
 Function SR_InitEvents()
 	SR_UnRegisterEvent()
@@ -262,64 +304,24 @@ Function SR_RegisterForKey(int oldkeyCode, int a_keyCode)
 	Debug.Trace("Register for new key" + a_keyCode)
 EndFunction
 
-Function UpdateAffinityOnQuestCompleted(String inputString)
-	;This function is used to update Npc's QuestFavor stat and FactionAffinity stat towards Player
-	string[] SplitedStrings = Split(inputString, "|")
-	int StrNum = SplitedStrings.Length
-	int iter = 0
-	string outputstring = "Quest Objective Completed! NPC's SV has changed:"
-	int FavorValue
-	while iter < StrNum
-		String CurString = SplitedStrings[iter]
-		Form curForm = GetFormByEditorID(CurString)
+;-----------Set and get value from StorageUtil--------------------
 
-		If (curForm) ;Check to see if current string is EditorID or int value
-			Actor CurNPC = GetFormByEditorID(CurString + "REF") as Actor
-			Faction CurFaction = GetFormByEditorID(CurString) as Faction
+Function IncreaseFactionFame(Faction inFaction, int inValue)
+	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
+	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, curVal + inValue)
 
-			If (CurNPC) 
-				;------------------------look for npcs entry----------------------------
-				IncreaseQuestFavor(CurNPC, FavorValue)
-
-			elseif (CurFaction)
-				;------------------------look for faction entry------------------------
-				IncreaseFactionFame(CurFaction,  FavorValue)
-
-			Elseif (isDebugEnable())
-				Debug.Notification("This editorID is not what we look for: " + CurString)
-				Debug.trace("This editorID is not what we look for: " + CurString)
-			endif
-			outputstring = outputstring + "\n" + CurString + ": " + FavorValue
-		else
-			;Update SVOffset
-			FavorValue = Substring(CurString, 1, GetLength(CurString) - 1) as int
-			if (FavorValue == 0 && isDebugEnable())
-				Debug.Notification("Invalid editorID entry" + CurString)
-				Debug.trace("Invalid editorID entry" + CurString)
-			Endif
-			
-			String FirstChar = substring(CurString, 0, 1)
-			If (FirstChar == "-")
-				FavorValue = -FavorValue
-			EndIf
-		EndIf
-		iter += 1
-	EndWhile
 	If (isDebugEnable())
-		debug.Trace(outputstring)
-		debug.messagebox(outputstring)
+		If (inFaction)
+			Debug.notification("Fame of " + (inFaction as form).GetName() + " increased by " + inValue + ", now is: " + StorageUtil.GetIntValue(inFaction as Form, FactionFameKey))
+		else
+			Debug.notification("Faction is not valid!")
+		EndIf
 	EndIf
 EndFunction
 
-;-----------Set and get value from StorageUtil--------------------
-
-Function IncreaseFactionFame(Faction inFaction, int FameToIncrease)
-	int CurVal = StorageUtil.GetIntValue(inFaction as Form, FactionFameKey)
-	StorageUtil.SetIntValue(inFaction as Form, FactionFameKey, curVal + FameToIncrease)
-
-	If (isDebugEnable())
-		Debug.notification("Fame of " + inFaction.GetName() + " increased by " + FameToIncrease)
-	EndIf
+Function IncreaseGiftFavor(Actor NPC, int inValue)
+	int CurVal = StorageUtil.GetIntValue(NPC, GiftFavorKey)
+	StorageUtil.SetIntValue(NPC, GiftFavorKey, curVal + inValue)
 EndFunction
 
 Function IncreaseQuestFavor(Actor NPC, int invalue)
@@ -327,9 +329,9 @@ Function IncreaseQuestFavor(Actor NPC, int invalue)
 	int curVal = oromance.GetQuestFavorStat(NPC)
 	If (curVal < 20)
 		StorageUtil.SetIntValue(NPC, QuestFavorKey, curVal + inValue)
-		If (isDebugEnable())
-			Debug.notification(NPC.GetDisplayName() + "'s Quest Favor increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
-		EndIf
+		; If (isDebugEnable())
+		; 	Debug.notification(NPC.GetDisplayName() + "'s Quest Favor increased by " + invalue + "; Now is: " + ORomance.GetQuestFavorStat(NPC))
+		; EndIf
 	else
 		If (isDebugEnable())
 			Debug.notification(NPC.GetDisplayName() + "'s Quest Favor is already maxed!")
@@ -339,6 +341,17 @@ Endfunction
 
 int Function GetNPCFavor(Actor NPC, string inKey)
 	return StorageUtil.GetIntValue(NPC, inKey)
+EndFunction
+
+int Function GetNPCFactionFavor(Actor NPC)
+	Faction[] FactionList = NPC.GetFactions(0, 127)
+	int FactionIndex = FactionList.Length
+	int FactionFavorSum
+	While (FactionIndex)
+		FactionIndex -= 1
+		FactionFavorSum += StorageUtil.GetIntValue(FactionList[FactionIndex], FactionFameKey)
+	EndWhile
+	return FactionFavorSum
 EndFunction
 
 ;---------Begin MCM Setter & Caller----------------

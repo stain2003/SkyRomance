@@ -68,8 +68,10 @@ float Function IntLeanearRemap(int value, int input_min, int input_max, int outp
 
 EndFunction
 
-Function AmplifySpeech(float Magnitude = 10.0) Global
+Function AmplifyPlayerSpeech(float Magnitude = 10.0) Global
     Spell BarterSpell = game.GetFormFromFile(0x0284ff, "SkyRomance.esp") as spell
+    game.GetPlayer().RemoveSpell(BarterSpell)
+
     BarterSpell.SetNthEffectMagnitude(0, Magnitude)
     game.GetPlayer().AddSpell(BarterSpell)
 EndFunction
